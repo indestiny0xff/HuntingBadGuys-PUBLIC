@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <!--SEO_META-->
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <!-- Font Awesome - renders the case-graph node icons embedded in posts -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css"/>
+  <style>
+    :root{
+      --bg:#03050a;--surf:#080c18;--surf-s:#080c18;--surf2:#0d1224;--surf3:#111829;
+      --border:#18243a;--border2:#1e2f4a;
+      --text:#e4ecf8;--muted:#445569;--dim:#6882a4;
+      --accent:#7c3aed;--accent-g:linear-gradient(135deg,#7c3aed,#6d28d9);
+      --cyan:#06b6d4;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--purple:#a855f7;
+      --font:'Inter',system-ui,sans-serif;
+      --mono:'JetBrains Mono','Fira Code',ui-monospace,monospace;
+      --r:10px;--r-sm:7px;--r-xs:4px}
+    *{box-sizing:border-box}
+    html{font-size:14px}
+    body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;
+      background-image:radial-gradient(ellipse 80% 40% at 50% -5%,rgba(var(--accent-rgb),.1) 0%,transparent 60%)}
+    body::before{content:'';position:fixed;top:0;left:0;right:0;height:2px;z-index:300;
+      background:linear-gradient(90deg,var(--accent) 0%,#06b6d4 45%,#10b981 80%,var(--accent) 100%)}
+    header{position:sticky;top:2px;z-index:100;background:color-mix(in srgb, var(--bg) 88%, transparent);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);padding:0 1.1rem;height:52px;display:flex;align-items:center;gap:1rem}
+    .logo{display:flex;align-items:center;text-decoration:none;flex-shrink:0}
+    .logo-wm{font-size:.9rem;font-weight:800;letter-spacing:-.025em;background:linear-gradient(135deg,var(--text),var(--dim));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .logo-wm em{font-style:normal;-webkit-text-fill-color:var(--accent)}
+    .hdr-right{margin-left:auto;display:flex;align-items:center;gap:.5rem;flex-shrink:0;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:.3rem;padding:.3rem .7rem;border:1px solid var(--border);border-radius:6px;background:var(--surf2);color:var(--dim);cursor:pointer;font-size:.73rem;font-family:inherit;text-decoration:none;transition:all .15s}
+    .btn:hover{border-color:#2f3a4f;color:var(--text)}
+    article{max-width:760px;margin:0 auto;padding:2rem 1.1rem 4rem}
+    h1.title{font-size:1.9rem;font-weight:800;letter-spacing:-.02em;line-height:1.2;margin:.2rem 0 .5rem}
+    .meta{display:flex;gap:.7rem;align-items:center;font-size:.72rem;color:var(--dim);flex-wrap:wrap;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+    .tag{font-size:.62rem;background:rgba(var(--accent-rgb),.12);border:1px solid rgba(var(--accent-rgb),.25);color:#a855f7;border-radius:20px;padding:.05rem .5rem}
+    .body h1,.body h2,.body h3{margin:1.4rem 0 .5rem;line-height:1.25;letter-spacing:-.01em}
+    .body h1{font-size:1.4rem}.body h2{font-size:1.2rem}.body h3{font-size:1.02rem}
+    .body p{margin:.7rem 0}.body ul,.body ol{margin:.7rem 0 .7rem 1.3rem}
+    .body code{background:var(--surf2);padding:.05rem .3rem;border-radius:3px;font-family:var(--mono);font-size:.85em}
+    .body pre{background:var(--surf2);padding:.8rem;border-radius:8px;overflow:auto;border:1px solid var(--border)}.body pre code{background:none;padding:0}
+    .body a{color:var(--accent)}
+    .body img{max-width:100%;border:1px solid var(--border);border-radius:8px;margin:.8rem 0}
+    .body blockquote{border-left:3px solid var(--accent);margin:.8rem 0;padding:.2rem .9rem;color:var(--muted)}
+    .body table{border-collapse:collapse;margin:.9rem 0;font-size:.8rem;width:100%;display:block;overflow-x:auto}
+    .body th,.body td{border:1px solid var(--border);padding:.35rem .6rem;text-align:left}.body th{background:var(--surf2)}
+    .cti-banner{position:relative;border-radius:10px;padding:1.4rem 1.5rem;margin:0 0 1.4rem;overflow:hidden;
+      background:linear-gradient(120deg,rgba(var(--accent-rgb),.22),rgba(6,182,212,.14) 60%,rgba(16,185,129,.12));border:1px solid rgba(var(--accent-rgb),.35)}
+    .cti-banner::before{content:'';position:absolute;left:0;top:0;right:0;height:3px;background:linear-gradient(90deg,var(--accent) 0%,#06b6d4 45%,#10b981 80%,var(--accent) 100%)}
+    .cti-banner-logo{font-size:1.3rem;font-weight:800;letter-spacing:-.02em;color:var(--text)}.cti-banner-logo span{color:#a855f7}
+    .cti-banner-tag{font-size:.72rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:.3rem}
+    .case-graph svg{width:100%;height:auto;display:block;border-radius:8px;margin:.8rem 0}
+    .empty{color:var(--muted);text-align:center;padding:3rem 1rem}
+    .downloads{display:flex;flex-wrap:wrap;gap:1.1rem;margin-top:2rem;padding-top:1.3rem;border-top:1px solid var(--border)}
+    .dl-btn{font-family:inherit;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--text);
+      background:linear-gradient(120deg,rgba(var(--accent-rgb),.18),rgba(6,182,212,.12));
+      border:1px solid rgba(var(--accent-rgb),.35);border-radius:8px;padding:.5rem .9rem;transition:border-color .15s,transform .15s}
+    .dl-btn:hover{border-color:rgba(var(--accent-rgb),.6);transform:translateY(-1px)}
+    @media(max-width:560px){
+      header{padding:.6rem .8rem;gap:.5rem;flex-wrap:wrap}
+      article{padding:1.2rem .85rem 3rem}
+      h1.title{font-size:1.4rem}
+      .cti-banner{padding:.85rem 1rem;border-radius:8px;margin-bottom:1rem}
+      .cti-banner-logo{font-size:1.02rem}
+      .cti-banner-tag{font-size:.58rem;letter-spacing:.1em}
+      .body pre{font-size:.72rem}
+      .body table{font-size:.72rem}
+    }
+  
+  
+    [data-theme=light] .nav-logo-wm, [data-theme=light] .logo-wm, [data-theme=light] h1, [data-theme=light] h2, [data-theme=light] h3 { color: var(--text); -webkit-text-fill-color: initial }
+  </style>
+</head>
+<body>
+<header>
+  <a href="/" class="logo"><span class="logo-wm">{{BRAND_A}}<em>{{BRAND_B}}</em></span></a>
+  <div class="hdr-right">
+    <a href="/app" class="btn">App</a>
+    <a href="/" class="btn">Public</a>
+    <a href="/intel" class="btn" id="nav-intel" style="display:none">Intel</a>
+    <a href="/blog" class="btn">Blog</a>
+    <div class="theme-menu"><button type="button" class="btn theme-btn" onclick="hbgToggleThemeMenu(event)" aria-haspopup="true" aria-expanded="false" title="Accent colour"><span class="theme-dot"></span>Theme</button><div class="theme-list" role="menu"><button type="button" role="menuitem" data-theme="purple" onclick="hbgApplyTheme('purple')"><span class="theme-dot" style="background:#7c3aed"></span>Purple</button><button type="button" role="menuitem" data-theme="red" onclick="hbgApplyTheme('red')"><span class="theme-dot" style="background:#ef4444"></span>Red</button><button type="button" role="menuitem" data-theme="green" onclick="hbgApplyTheme('green')"><span class="theme-dot" style="background:#22c55e"></span>Green</button><button type="button" role="menuitem" data-theme="blue" onclick="hbgApplyTheme('blue')"><span class="theme-dot" style="background:#3b82f6"></span>Blue</button><button type="button" role="menuitem" data-theme="black" onclick="hbgApplyTheme('black')"><span class="theme-dot" style="background:var(--text)"></span>Black</button></div></div>
+    <button type="button" class="btn mode-btn" onclick="hbgToggleMode()" title="Light / dark mode" aria-label="Toggle light or dark mode"><span class="mode-icon">&#9728;</span></button>
+  </div>
+</header>
+<script>fetch('/auth/me').then(r=>{if(r.ok){const e=document.getElementById('nav-intel');if(e)e.style.display=''}}).catch(()=>{});</script>
+<article id="article"><div class="empty">Loading…</div></article>
+<script>
+  const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmtDate=s=>{if(!s)return'';const d=new Date(s);return isNaN(d)?'':d.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})};
+  const _slugify=s=>(s||'post').toLowerCase().trim().replace(/[^\w\s-]/g,'').replace(/[\s_]+/g,'-').replace(/-+/g,'-').slice(0,80);
+  let _POST=null;
+  function _dl(name,content,mime){const blob=new Blob([content],{type:mime});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},100);}
+  function dlReport(){if(_POST&&_POST.report_html)_dl(_slugify(_POST.title)+'.html',_POST.report_html,'text/html');}
+  function dlStix(){if(_POST&&_POST.stix)_dl(_slugify(_POST.title)+'-stix.json',JSON.stringify(_POST.stix,null,2),'application/json');}
+  function dlGraph(){if(_POST&&_POST.graph_svg){_dl(_slugify(_POST.title)+'-graph.svg',_POST.graph_svg,'image/svg+xml');}else if(_POST&&_POST.graph_png){const a=document.createElement('a');a.href=_POST.graph_png;a.download=_slugify(_POST.title)+'-graph.png';document.body.appendChild(a);a.click();setTimeout(()=>a.remove(),100);}}
+  (async function(){
+    const el=document.getElementById('article');
+    const slug=decodeURIComponent(location.pathname.replace(/^\/blog\//,'').replace(/\/$/,''));
+    try{
+      const r=await fetch('/api/blog/posts/'+encodeURIComponent(slug));
+      if(r.status===404){el.innerHTML='<div class="empty">Post not found.</div>';return}
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const p=await r.json(); _POST=p;
+      document.title=(p.title||'Post')+' - {{APP_NAME}}';
+      const dls=[
+        (p.report_html?`<button class="dl-btn" onclick="dlReport()">Download report (.html)</button>`:''),
+        (p.stix?`<button class="dl-btn" onclick="dlStix()">Download STIX</button>`:''),
+      ].filter(Boolean).join('');
+      el.innerHTML=`<h1 class="title">${esc(p.title)}</h1>
+        <div class="meta">
+          ${p.author?`<span>by ${esc(p.author)}</span>`:''}
+          ${p.published_at?`<span>${fmtDate(p.published_at)}</span>`:''}
+          ${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+        </div>
+        <div class="body">${p.body_html||''}</div>
+        <div class="downloads">${dls}</div>`;
+    }catch(e){el.innerHTML=`<div class="empty">Could not load post (${esc(e.message)})</div>`}
+  })();
+</script>
+</body>
+</html>

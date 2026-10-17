@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{{APP_NAME}} - Threat Infrastructure Hunting Platform</title>
+  <meta name="description" content="Hunt phishing kits, map C2 infrastructure, extract IOCs and generate investigation reports. {{APP_NAME}} analyses domains and IPs at scale with DNS, HTTP chain tracing, screenshots, EFI/EFA, network graphs and 65 IOC patterns."/>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg:      #03050a;
+      --surf:    #080c18;
+      --surf2:   #0d1224;
+      --surf3:   #111829;
+      --border:  #18243a;
+      --border2: #1e2f4a;
+      --text:    #e4ecf8;
+      --muted:   #5a6b82;
+      --dim:     #8497b0;
+      --accent:  #7c3aed;
+      --accent2: #6d28d9;
+      --green:  #10b981;
+      --amber:  #f59e0b;
+      --red:    #ef4444;
+      --purple: #a855f7;
+      --cyan:   #06b6d4;
+      --blue:   #3b82f6;
+      --font: 'Inter', system-ui, -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+    html { font-size: 14px; scroll-behavior: smooth }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased }
+    a { color: inherit }
+    code { font-family: var(--mono) }
+
+    /* ── NAV ──────────────────────────────────────────────── */
+    .top-bar{height:2px;background:linear-gradient(90deg,var(--accent) 0%,#06b6d4 45%,#10b981 80%,var(--accent) 100%)}
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0 1.5rem; height: 52px;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo { display: flex; align-items: center; gap: .55rem; text-decoration: none; flex-shrink: 0 }
+    .nav-logo-wm { font-size: .9rem; font-weight: 800; letter-spacing: -.025em;
+                   background: linear-gradient(135deg, var(--text), var(--dim));
+                   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text }
+    .nav-logo-wm em { font-style: normal; -webkit-text-fill-color: var(--accent) }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: .5rem }
+    .nav-link { font-size: .75rem; font-weight: 500; color: var(--dim); text-decoration: none;
+                padding: .3rem .7rem; border: 1px solid var(--border); border-radius: 6px;
+                background: var(--surf2); transition: all .15s }
+    .nav-link:hover { border-color: var(--border2); color: var(--text) }
+
+    /* ── MONO BADGE (replaces icons) ──────────────────────── */
+    .mb {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 2.4rem; height: 1.6rem; padding: 0 .45rem;
+      font-family: var(--mono); font-size: .62rem; font-weight: 700;
+      letter-spacing: .04em; text-transform: uppercase; white-space: nowrap;
+      color: var(--dim); background: var(--surf2);
+      border: 1px solid var(--border2); border-radius: 5px; flex-shrink: 0;
+    }
+    .mb-accent { color: var(--accent); border-color: rgba(var(--accent-rgb),.35); background: rgba(var(--accent-rgb),.08) }
+    .mb-cyan   { color: #67e8f9; border-color: rgba(6,182,212,.35);  background: rgba(6,182,212,.08) }
+    .mb-green  { color: #6ee7b7; border-color: rgba(16,185,129,.35); background: rgba(16,185,129,.08) }
+    .mb-amber  { color: #fcd34d; border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.08) }
+    .mb-red    { color: #f87171; border-color: rgba(239,68,68,.35);  background: rgba(239,68,68,.08) }
+
+    /* ── HERO ─────────────────────────────────────────────── */
+    .hero-wrap {
+      position: relative; overflow: hidden;
+      background:
+        radial-gradient(ellipse 85% 55% at 50% -15%, rgba(var(--accent-rgb),0.10) 0%, transparent 65%),
+        var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+    .hero {
+      position: relative; z-index: 1;
+      max-width: 820px; margin: 0 auto; padding: 5.5rem 2rem 4.5rem;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: .5rem;
+      font-family: var(--mono); font-size: .68rem; font-weight: 600;
+      letter-spacing: .12em; text-transform: uppercase;
+      color: var(--dim); background: var(--surf2);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: .35rem .8rem; margin-bottom: 1.8rem;
+    }
+    .hero-h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.12;
+      letter-spacing: -.03em; margin-bottom: 1.3rem; color: var(--text);
+    }
+    .hero-h1 em { font-style: normal; color: var(--accent) }
+    .hero-sub {
+      font-size: 1.02rem; font-weight: 400; color: var(--dim); line-height: 1.7;
+      max-width: 600px; margin: 0 auto 2.4rem;
+    }
+    .hero-actions { display: flex; justify-content: center; gap: .7rem; flex-wrap: wrap; margin-bottom: 3rem }
+    .btn-hero {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .68rem 1.5rem; border-radius: 8px; font-size: .85rem; font-weight: 700;
+      text-decoration: none; transition: all .15s; border: 1px solid transparent; cursor: pointer;
+    }
+    .btn-hero-primary { background: var(--accent); color: #fff }
+    .btn-hero-primary:hover { background: var(--accent2) }
+    .btn-hero-ghost { background: var(--surf2); color: var(--dim); border-color: var(--border2) }
+    .btn-hero-ghost:hover { color: var(--text); border-color: var(--dim) }
+    .hero-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: .45rem }
+    .hero-tag {
+      font-family: var(--mono); font-size: .66rem; font-weight: 500; color: var(--muted);
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 5px; padding: .25rem .6rem;
+    }
+
+    /* ── SECTION CHROME ───────────────────────────────────── */
+    .section { max-width: 1080px; margin: 0 auto; padding: 4.5rem 2rem; width: 100% }
+    .section-head { display: flex; align-items: baseline; gap: .8rem; margin-bottom: .7rem }
+    .section-idx { font-family: var(--mono); font-size: .72rem; font-weight: 700; color: var(--accent); letter-spacing: .05em }
+    .section-eyebrow { font-family: var(--mono); font-size: .68rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--muted) }
+    .section-title { font-size: clamp(1.3rem, 2.5vw, 1.8rem); font-weight: 800; letter-spacing: -.02em; color: var(--text); margin-bottom: .7rem; line-height: 1.2 }
+    .section-sub { font-size: .9rem; color: var(--dim); line-height: 1.7; max-width: 620px }
+    .sep { border: none; border-top: 1px solid var(--border); margin: 0 }
+
+    /* ── CAPABILITIES GRID ────────────────────────────────── */
+    .caps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1px; margin-top: 2.5rem; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--border) }
+    .cap { padding: 1.4rem 1.2rem; background: var(--surf); transition: background .15s }
+    .cap:hover { background: var(--surf2) }
+    .cap .mb { margin-bottom: .85rem }
+    .cap-title { font-size: .82rem; font-weight: 700; color: var(--text); margin-bottom: .35rem }
+    .cap-desc { font-size: .73rem; color: var(--muted); line-height: 1.65 }
+
+    /* ── FEATURE CARDS ────────────────────────────────────── */
+    .feat3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-top: 2.5rem }
+    .feat3-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 1rem; margin-top: 1rem }
+    .fcard { background: var(--surf); border: 1px solid var(--border); border-radius: 10px; padding: 1.3rem 1.2rem; transition: border-color .15s }
+    .fcard:hover { border-color: var(--border2) }
+    .fcard-head { display: flex; align-items: center; gap: .6rem; margin-bottom: .7rem }
+    .fcard-title { font-size: .82rem; font-weight: 700; color: var(--text) }
+    .fcard-head .fcard-title { margin: 0 }
+    .fcard-desc { font-size: .74rem; color: var(--muted); line-height: 1.65 }
+    .fcard code { font-size: .7rem; color: var(--cyan) }
+
+    /* ── IOC CATEGORIES ───────────────────────────────────── */
+    .ioc-groups { display: flex; flex-direction: column; gap: 1rem; margin-top: 2.5rem }
+    .ioc-group { background: var(--surf); border: 1px solid var(--border); border-radius: 10px; overflow: hidden }
+    .ioc-group-hdr { display: flex; align-items: center; gap: .7rem; padding: .7rem 1.1rem; background: var(--surf2); border-bottom: 1px solid var(--border) }
+    .ioc-group-title { font-size: .8rem; font-weight: 700; color: var(--text) }
+    .ioc-group-count { font-family: var(--mono); font-size: .62rem; color: var(--dim); border: 1px solid var(--border2); border-radius: 5px; padding: .1rem .45rem; margin-left: auto }
+    .ioc-chips { display: flex; flex-wrap: wrap; gap: .4rem; padding: .9rem 1.1rem }
+    .ioc-chip { font-size: .68rem; font-weight: 500; color: var(--dim); background: var(--surf2); border: 1px solid var(--border); border-radius: 5px; padding: .18rem .55rem }
+    .ioc-chip.cred   { border-color: rgba(239,68,68,.25); color: #f87171 }
+    .ioc-chip.crypto { border-color: rgba(245,158,11,.25); color: #fcd34d }
+    .ioc-chip.c2     { border-color: rgba(6,182,212,.25); color: #67e8f9 }
+    .ioc-chip.social { border-color: rgba(168,85,247,.25); color: #c084fc }
+    .ioc-chip.dating { border-color: rgba(236,72,153,.25); color: #f9a8d4 }
+    .ioc-chip.msg    { border-color: rgba(16,185,129,.25); color: #6ee7b7 }
+
+    /* ── SUB-HEAD ─────────────────────────────────────────── */
+    .subhead { font-family: var(--mono); font-size: .68rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.2rem }
+
+    /* ── INLINE CARD ──────────────────────────────────────── */
+    .icard-grid { display: grid; gap: .9rem; margin-top: 1.5rem }
+    .icard { background: var(--surf); border: 1px solid var(--border); border-radius: 10px; padding: 1rem 1.1rem; display: flex; gap: .8rem; align-items: flex-start }
+    .icard-title { font-size: .78rem; font-weight: 700; color: var(--text); margin-bottom: .25rem }
+    .icard-desc { font-size: .7rem; color: var(--muted); line-height: 1.55 }
+
+    /* ── SCENARIOS ────────────────────────────────────────── */
+    .scenarios { display: flex; flex-direction: column; gap: 1.1rem; margin-top: 2.5rem }
+    .scenario { display: grid; grid-template-columns: 1fr 1fr; gap: 0; background: var(--surf); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: border-color .2s }
+    .scenario:hover { border-color: var(--border2) }
+    .sc-info { padding: 1.7rem 1.5rem }
+    .sc-tag { display: inline-flex; align-items: center; font-family: var(--mono); font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; padding: .22rem .6rem; border-radius: 5px; margin-bottom: .8rem; border: 1px solid var(--border2); color: var(--dim); background: var(--surf2) }
+    .tag-red   { border-color: rgba(239,68,68,.3);  color: #f87171 }
+    .tag-blue  { border-color: rgba(6,182,212,.3);  color: #67e8f9 }
+    .tag-indigo{ border-color: rgba(var(--accent-rgb),.3); color: var(--accent) }
+    .tag-amber { border-color: rgba(245,158,11,.3); color: #fcd34d }
+    .tag-pink  { border-color: rgba(236,72,153,.3); color: #f9a8d4 }
+    .tag-cyan  { border-color: rgba(6,182,212,.3);  color: #67e8f9 }
+    .sc-title { font-size: .95rem; font-weight: 700; color: var(--text); margin-bottom: .5rem; line-height: 1.3 }
+    .sc-desc  { font-size: .78rem; color: var(--dim); line-height: 1.7; margin-bottom: 1rem }
+    .sc-finds { display: flex; flex-direction: column; gap: .35rem }
+    .sc-find  { font-size: .72rem; color: var(--muted); display: flex; align-items: baseline; gap: .45rem }
+    .sc-find::before { content: ">"; font-family: var(--mono); color: var(--accent); font-size: .68rem; flex-shrink: 0 }
+    .sc-code { background: var(--surf2); border-left: 1px solid var(--border); padding: 1.5rem 1.4rem; display: flex; flex-direction: column; justify-content: center; gap: .9rem }
+    .code-lbl { font-family: var(--mono); font-size: .6rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: .35rem }
+    pre { background: var(--surf3); border: 1px solid var(--border); border-radius: 7px; padding: .75rem 1rem; overflow-x: auto; line-height: 1.65; font-size: .73rem }
+    pre code { font-family: var(--mono); color: var(--text) }
+    .kw  { color: var(--accent) }
+    .val { color: #fcd34d }
+    .op  { color: #67e8f9 }
+    .fld { color: var(--accent) }
+
+    /* ── QUERY GRID ───────────────────────────────────────── */
+    .query-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; margin-top: 2.5rem }
+    .qcard { background: var(--surf); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; transition: border-color .15s }
+    .qcard:hover { border-color: var(--border2) }
+    .qcard-title { font-size: .75rem; font-weight: 600; color: var(--text); margin-bottom: .6rem }
+    .qcard pre { background: var(--bg); padding: .6rem .8rem; border-radius: 6px }
+
+    /* ── REPORT PREVIEW ───────────────────────────────────── */
+    .report-preview { margin-top: 2.5rem; background: var(--surf); border: 1px solid var(--border); border-radius: 12px; overflow: hidden }
+    .rp-bar { display: flex; align-items: center; gap: .5rem; background: var(--surf2); padding: .55rem .9rem; border-bottom: 1px solid var(--border) }
+    .rp-dot { width: 9px; height: 9px; border-radius: 50% }
+    .rp-label { font-family: var(--mono); font-size: .68rem; color: var(--muted); margin-left: .3rem; flex: 1 }
+    .rp-badge { font-family: var(--mono); font-size: .6rem; font-weight: 600; letter-spacing: .04em; padding: .14rem .45rem; border-radius: 4px; background: var(--surf3); border: 1px solid var(--border2); color: var(--dim) }
+    .rp-body { padding: 1.4rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: .5rem }
+    .rp-stat { background: var(--surf2); border: 1px solid var(--border); border-radius: 6px; padding: .5rem .6rem; text-align: center }
+    .rp-val { font-size: 1.1rem; font-weight: 800; color: var(--purple); font-variant-numeric: tabular-nums }
+    .rp-val.g { color: var(--green) } .rp-val.c { color: var(--cyan) } .rp-val.b { color: var(--blue) } .rp-val.r { color: var(--red) } .rp-val.a { color: var(--amber) }
+    .rp-lbl { font-family: var(--mono); font-size: .55rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-top: .15rem }
+
+    /* ── STEP LIST ────────────────────────────────────────── */
+    .steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 1px; margin-top: 2.5rem; background: var(--border); border: 1px solid var(--border); border-radius: 12px; overflow: hidden }
+    .step { background: var(--surf); padding: 1.5rem 1.3rem }
+    .step-num { width: 30px; height: 30px; border-radius: 7px; background: var(--surf2); border: 1px solid var(--border2); display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: .8rem; font-weight: 700; color: var(--accent); margin-bottom: 1rem }
+    .step-title { font-size: .85rem; font-weight: 700; color: var(--text); margin-bottom: .4rem }
+    .step-desc { font-size: .76rem; color: var(--muted); line-height: 1.65 }
+
+    /* ── CTA ──────────────────────────────────────────────── */
+    .cta-wrap { background: var(--surf); border-top: 1px solid var(--border); text-align: center; padding: 4.5rem 2rem }
+    .cta-title { font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 800; letter-spacing: -.02em; color: var(--text); margin-bottom: .8rem }
+    .cta-sub { font-size: .9rem; color: var(--dim); margin-bottom: 2rem; line-height: 1.7 }
+    .cta-actions { display: flex; justify-content: center; gap: .7rem; flex-wrap: wrap }
+
+    /* ── FOOTER ───────────────────────────────────────────── */
+    footer { padding: 1rem; text-align: center; font-family: var(--mono); font-size: .65rem; font-weight: 500; color: var(--muted); background: var(--surf); border-top: 1px solid var(--border) }
+
+    @media (max-width: 900px) { .feat3, .steps { grid-template-columns: 1fr 1fr } }
+    @media (max-width: 700px) {
+      .scenario { grid-template-columns: 1fr }
+      .sc-code { border-left: none; border-top: 1px solid var(--border) }
+      .feat3, .feat3-2, .steps { grid-template-columns: 1fr }
+    }
+    @media (max-width: 600px) {
+      nav { height: auto; min-height: 52px; flex-wrap: wrap; padding: .5rem .9rem; gap: .5rem }
+      .nav-right { margin-left: auto; flex-wrap: wrap; gap: .4rem }
+      .nav-link { font-size: .72rem; padding: .28rem .6rem }
+      .hero { padding: 3rem 1.1rem 2.5rem }
+      .hero-sub { font-size: .95rem }
+      .hero-actions { margin-bottom: 2rem }
+      .section { padding: 2.8rem 1.1rem }
+      .caps-grid { grid-template-columns: 1fr; margin-top: 2rem }
+      .ioc-groups { margin-top: 1.6rem }
+    }
+  
+  
+    [data-theme=light] .nav-logo-wm, [data-theme=light] .logo-wm, [data-theme=light] h1, [data-theme=light] h2, [data-theme=light] h3 { color: var(--text); -webkit-text-fill-color: initial }
+  </style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+<nav>
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-wm">{{BRAND_A}}<em>{{BRAND_B}}</em></span>
+  </a>
+  <div class="nav-right">
+    <a href="/app" class="nav-link">App</a>
+    <a href="/" class="nav-link">Public</a>
+    <a href="/intel" class="nav-link" id="nav-intel" style="display:none">Intel</a>
+    <a href="/blog" class="nav-link">Blog</a>
+    <div class="theme-menu"><button type="button" class="nav-link theme-btn" onclick="hbgToggleThemeMenu(event)" aria-haspopup="true" aria-expanded="false" title="Accent colour"><span class="theme-dot"></span>Theme</button><div class="theme-list" role="menu"><button type="button" role="menuitem" data-theme="purple" onclick="hbgApplyTheme('purple')"><span class="theme-dot" style="background:#7c3aed"></span>Purple</button><button type="button" role="menuitem" data-theme="red" onclick="hbgApplyTheme('red')"><span class="theme-dot" style="background:#ef4444"></span>Red</button><button type="button" role="menuitem" data-theme="green" onclick="hbgApplyTheme('green')"><span class="theme-dot" style="background:#22c55e"></span>Green</button><button type="button" role="menuitem" data-theme="blue" onclick="hbgApplyTheme('blue')"><span class="theme-dot" style="background:#3b82f6"></span>Blue</button><button type="button" role="menuitem" data-theme="black" onclick="hbgApplyTheme('black')"><span class="theme-dot" style="background:var(--text)"></span>Black</button></div></div>
+    <button type="button" class="nav-link mode-btn" onclick="hbgToggleMode()" title="Light / dark mode" aria-label="Toggle light or dark mode"><span class="mode-icon">&#9728;</span></button>
+  </div>
+</nav>
+<script>fetch('/auth/me').then(r=>{if(r.ok){const e=document.getElementById('nav-intel');if(e)e.style.display=''}}).catch(()=>{});</script>
+
+<!-- HERO -->
+<div class="hero-wrap">
+  <div class="hero">
+    <div class="hero-eyebrow">
+      Threat Infrastructure Hunting Platform
+    </div>
+    <h1 class="hero-h1">Hunt the infrastructure,<br/><em>extract the intelligence</em></h1>
+    <p class="hero-sub">Submit domains and IPs. Get DNS, HTTP chains, screenshots, file analysis, BGP enrichment, certificate transparency, IOC extraction and investigation-ready reports - all in one private workspace.</p>
+    <div class="hero-actions">
+      <a href="/app" class="btn-hero btn-hero-primary">Launch the app</a>
+      <a href="#scenarios" class="btn-hero btn-hero-ghost">See examples</a>
+    </div>
+    <div class="hero-tags">
+      <span class="hero-tag">DNS · WHOIS · HTTP chain</span>
+      <span class="hero-tag">Screenshots + pHash</span>
+      <span class="hero-tag">SHA-1 + MinHash LSH</span>
+      <span class="hero-tag">BGP / ASN enrichment</span>
+      <span class="hero-tag">Certificate transparency</span>
+      <span class="hero-tag">Tor / .onion support</span>
+      <span class="hero-tag">65-pattern IOC extraction</span>
+      <span class="hero-tag">Static file analysis</span>
+      <span class="hero-tag">Network graph</span>
+      <span class="hero-tag">HTML investigation reports</span>
+      <span class="hero-tag">GeoIP enrichment</span>
+      <span class="hero-tag">Email alerts</span>
+      <span class="hero-tag">Custom query language</span>
+      <span class="hero-tag">APK / IPA mobile analysis</span>
+      <span class="hero-tag">JADX decompilation</span>
+      <span class="hero-tag">STIX 2.1 export</span>
+    </div>
+  </div>
+</div>
+
+<!-- 01 · CAPABILITIES -->
+<div class="section">
+  <div class="section-head">
+    <span class="section-idx">01</span>
+    <span class="section-eyebrow">Collection</span>
+  </div>
+  <div class="section-title">Everything collected in a single scan</div>
+  <p class="section-sub">All tasks run concurrently per target. Results land in your private store the moment the scan completes - then stay queryable forever.</p>
+  <div class="caps-grid">
+    <div class="cap">
+      <span class="mb mb-accent">DNS</span>
+      <div class="cap-title">DNS Resolution</div>
+      <div class="cap-desc">A, AAAA, MX, TXT, NS, CNAME, SOA via async resolver against Google &amp; Cloudflare nameservers.</div>
+    </div>
+    <div class="cap">
+      <span class="mb mb-cyan">HTTP</span>
+      <div class="cap-title">HTTP Chain Tracing</div>
+      <div class="cap-desc">Follows every redirect hop, capturing status codes, full response headers and TLS details at each step.</div>
+    </div>
+    <div class="cap">
+      <span class="mb mb-accent">IMG</span>
+      <div class="cap-title">Screenshots + pHash</div>
+      <div class="cap-desc">Playwright screenshot on every 200 response. Perceptual hash clusters visually identical phishing pages. Bot-detection evasion enabled.</div>
+    </div>
+    <div class="cap">
+      <span class="mb">FP</span>
+      <div class="cap-title">Root File Fingerprinting</div>
+      <div class="cap-desc">Checks 30+ well-known paths for phishing kit indicators, config leaks and git exposure. SHA-1 + MinHash-LSH per file.</div>
+    </div>
+    <div class="cap">
+      <span class="mb">WEB</span>
+      <div class="cap-title">Web Crawling</div>
+      <div class="cap-desc">Crawls the domain's homepage, extracts all href/src links and fetches up to 30 linked resources - fingerprinting every file found.</div>
+    </div>
+    <div class="cap">
+      <span class="mb mb-cyan">CRT</span>
+      <div class="cap-title">Certificate Transparency</div>
+      <div class="cap-desc">Searches crt.sh for all certificates issued - past, present and wildcard - fully queryable by CN, SAN or issuer.</div>
+    </div>
+    <div class="cap">
+      <span class="mb">WHO</span>
+      <div class="cap-title">WHOIS</div>
+      <div class="cap-desc">Registrar, creation/expiry dates, nameservers and contact emails. Query like any other field.</div>
+    </div>
+    <div class="cap">
+      <span class="mb mb-cyan">BGP</span>
+      <div class="cap-title">BGP / ASN Enrichment</div>
+      <div class="cap-desc">RDAP + BGPView for ASN, CIDR and prefix. HE.net scraping for PTR records and network search results per IP block.</div>
+    </div>
+    <div class="cap">
+      <span class="mb">GEO</span>
+      <div class="cap-title">GeoIP Enrichment</div>
+      <div class="cap-desc">Country, city, region, timezone and ISP/org for every resolved IP - powered by GeoLite2 with no external calls at query time.</div>
+    </div>
+    <div class="cap">
+      <span class="mb mb-accent">TOR</span>
+      <div class="cap-title">Tor / .onion + Random IP</div>
+      <div class="cap-desc">Hidden-service analysis is routed through a local SOCKS5 proxy automatically. The <strong>Random IP</strong> toggle also routes clearnet scans through Tor for a fresh exit IP - handy for low-profile collection.</div>
+    </div>
+    <div class="cap">
+      <span class="mb">CASE</span>
+      <div class="cap-title">Folders &amp; Cases</div>
+      <div class="cap-desc">Organise investigations into folders and cases. Collapse/expand, batch EFI/EFA, and generate per-case reports from the sidebar.</div>
+    </div>
+    <div class="cap">
+      <span class="mb mb-green">SEC</span>
+      <div class="cap-title">Privacy Controls</div>
+      <div class="cap-desc">Mark any result private at any time. Private results are excluded from the public saved page - flip the padlock icon to toggle.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="sep"/>
+
+<!-- 02 · REPORTING & COLLABORATION -->
+<div class="section" id="reporting">
+  <div class="section-head">
+    <span class="section-idx">02</span>
+    <span class="section-eyebrow">Reporting &amp; Collaboration</span>
+  </div>
+  <div class="section-title">From raw scans to a published CTI report</div>
+  <p class="section-sub">Turn a case into an intelligence product - write it up, work on it as a team, and publish it to a public threat-hunting blog.</p>
+
+  <div class="feat3">
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-cyan">FEED</span><div class="fcard-title">Intel team feed</div></div>
+      <div class="fcard-desc">An authenticated feed of the whole team's results - the public-page layout enriched with EFA file analysis and EFI IOC sections. Your private results are visible only to you.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-accent">EDIT</span><div class="fcard-title">CTI publication editor</div></div>
+      <div class="fcard-desc">A markdown report per case with live preview, a branded banner, <code>@</code>-autocomplete for case entities (domains/IPs/IOCs) and file content (dex/hex/strings), one-click Domains/IPs/IOCs/Files tables, paste-a-screenshot, and an embedded Apache ECharts relationship graph.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb">TEAM</span><div class="fcard-title">Team reports browser</div></div>
+      <div class="fcard-desc">A "Reports" view lists every publication across the team - anyone can open, pick up and edit any report. Built for collaborative write-ups.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb">BLOG</span><div class="fcard-title">Public blog</div></div>
+      <div class="fcard-desc">Publish a finished report to a public, SEO-indexed threat-hunting blog at <code>/blog</code> - with one-click unpublish. Markdown is rendered and sanitised server-side.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-green">DL</span><div class="fcard-title">Downloadable artifacts</div></div>
+      <div class="fcard-desc">Every published post offers a full HTML investigation report, the relationship graph as SVG, and a STIX 2.1 bundle of the case indicators - ready to share or ingest.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-accent">GRPH</span><div class="fcard-title">Relationship graph</div></div>
+      <div class="fcard-desc">An interactive Apache ECharts graph links domains, IPs, ASNs, certificates and countries across a whole case - shared infrastructure becomes obvious at a glance.</div>
+    </div>
+  </div>
+</div>
+
+<hr class="sep"/>
+
+<!-- 03 · EFI -->
+<div class="section" id="efi">
+  <div class="section-head">
+    <span class="section-idx">03</span>
+    <span class="section-eyebrow">IOC Extraction</span>
+  </div>
+  <div class="section-title">EFI - 65 patterns, 10 categories</div>
+  <p class="section-sub">EFI (Extracted File Info) scans every text source - DNS TXT records, WHOIS, HTTP headers, root files, crawled files and the domain's main page HTML - and extracts IOCs using 65 regex patterns across 10 threat-relevant categories.</p>
+
+  <div class="feat3">
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-cyan">HTML</span><div class="fcard-title">Main page scanning</div></div>
+      <div class="fcard-desc">The domain's full HTML is fetched (up to 5 MB) and scanned alongside root/crawled files - catching hardcoded keys and contact handles embedded in inline <code>&lt;script&gt;</code> blocks that file metadata alone would miss.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb">FILE</span><div class="fcard-title">Per-file extraction</div></div>
+      <div class="fcard-desc">Each file row in Root Files and Crawled Files has an EFI button - run extraction on a single file without rescanning the whole result. Great for isolating a specific JS bundle or config file.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-accent">BATCH</span><div class="fcard-title">Case-level batch EFI</div></div>
+      <div class="fcard-desc">The EFI button on each case in the sidebar runs extraction across every result in that case in parallel - one click to surface IOCs across an entire campaign.</div>
+    </div>
+  </div>
+
+  <div class="ioc-groups">
+
+    <div class="ioc-group">
+      <div class="ioc-group-hdr">
+        <span class="mb mb-accent">SOC</span>
+        <span class="ioc-group-title">Social networks</span>
+        <span class="ioc-group-count">11 patterns</span>
+      </div>
+      <div class="ioc-chips">
+        <span class="ioc-chip social">Telegram</span>
+        <span class="ioc-chip social">Instagram</span>
+        <span class="ioc-chip social">Facebook</span>
+        <span class="ioc-chip social">Twitter / X</span>
+        <span class="ioc-chip social">Discord</span>
+        <span class="ioc-chip social">YouTube</span>
+        <span class="ioc-chip social">TikTok</span>
+        <span class="ioc-chip social">Snapchat</span>
+        <span class="ioc-chip social">LinkedIn</span>
+        <span class="ioc-chip social">VK</span>
+        <span class="ioc-chip social">GitHub</span>
+      </div>
+    </div>
+
+    <div class="ioc-group">
+      <div class="ioc-group-hdr">
+        <span class="mb mb-red">DATE</span>
+        <span class="ioc-group-title">Dating / romance scam apps</span>
+        <span class="ioc-group-count">4 patterns</span>
+      </div>
+      <div class="ioc-chips">
+        <span class="ioc-chip dating">Tinder</span>
+        <span class="ioc-chip dating">Bumble</span>
+        <span class="ioc-chip dating">Badoo</span>
+        <span class="ioc-chip dating">Meetic</span>
+      </div>
+    </div>
+
+    <div class="ioc-group">
+      <div class="ioc-group-hdr">
+        <span class="mb mb-green">MSG</span>
+        <span class="ioc-group-title">Messaging / C2 channels</span>
+        <span class="ioc-group-count">10 patterns</span>
+      </div>
+      <div class="ioc-chips">
+        <span class="ioc-chip msg">WhatsApp</span>
+        <span class="ioc-chip msg">Signal</span>
+        <span class="ioc-chip msg">Skype</span>
+        <span class="ioc-chip msg">WeChat</span>
+        <span class="ioc-chip msg">Line</span>
+        <span class="ioc-chip msg">Viber</span>
+        <span class="ioc-chip msg">Kik</span>
+        <span class="ioc-chip msg">ICQ</span>
+        <span class="ioc-chip msg">Wire</span>
+        <span class="ioc-chip msg">Zalo</span>
+      </div>
+    </div>
+
+    <div class="ioc-group">
+      <div class="ioc-group-hdr">
+        <span class="mb mb-accent">VID</span>
+        <span class="ioc-group-title">Video / streaming / other social</span>
+        <span class="ioc-group-count">5 patterns</span>
+      </div>
+      <div class="ioc-chips">
+        <span class="ioc-chip social">Twitch</span>
+        <span class="ioc-chip social">Twitch Clips</span>
+        <span class="ioc-chip social">Reddit</span>
+        <span class="ioc-chip social">OnlyFans</span>
+        <span class="ioc-chip social">Rumble</span>
+      </div>
+    </div>
+
+    <div class="ioc-group">
+      <div class="ioc-group-hdr">
+        <span class="mb mb-cyan">PASTE</span>
+        <span class="ioc-group-title">Paste / payload hosting (C2)</span>
+        <span class="ioc-group-count">1 pattern · 8 domains</span>
+      </div>
+      <div class="ioc-chips">
+        <span class="ioc-chip c2">Pastebin</span>
+        <span class="ioc-chip c2">Ghostbin</span>
+        <span class="ioc-chip c2">Hastebin</span>
+        <span class="ioc-chip c2">Paste.ee</span>
+        <span class="ioc-chip c2">Rentry.co</span>
+        <span class="ioc-chip c2">Dpaste.com</span>
+        <span class="ioc-chip c2">Bin.bz</span>
+        <span class="ioc-chip c2">ControlC</span>
+      </div>
+    </div>
+
+    <div class="ioc-group">
+      <div class="ioc-group-hdr">
+        <span class="mb mb-cyan">DROP</span>
+        <span class="ioc-group-title">Dead drop / file sharing (C2)</span>
+        <span class="ioc-group-count">5 patterns</span>
+      </div>
+      <div class="ioc-chips">
+        <span class="ioc-chip c2">Google Drive / Docs / Sheets / Forms</span>
+        <span class="ioc-chip c2">Notion</span>
+        <span class="ioc-chip c2">Dropbox / OneDrive</span>
+        <span class="ioc-chip c2">Keybase</span>
+        <span class="ioc-chip c2">Matrix</span>
+      </div>
+    </div>
+
+    <div class="ioc-group">
+      <div class="ioc-group-hdr">
+        <span class="mb mb-amber">BTC</span>
+        <span class="ioc-group-title">Crypto wallets</span>
+        <span class="ioc-group-count">5 patterns</span>
+      </div>
+      <div class="ioc-chips">
+        <span class="ioc-chip crypto">Bitcoin (P2PKH, P2SH, Bech32)</span>
+        <span class="ioc-chip crypto">Ethereum (ERC-20)</span>
+        <span class="ioc-chip crypto">Monero (XMR)</span>
+        <span class="ioc-chip crypto">USDT / TRC-20</span>
+        <span class="ioc-chip crypto">Litecoin</span>
+      </div>
+    </div>
+
+    <div class="ioc-group">
+      <div class="ioc-group-hdr">
+        <span class="mb mb-red">KEY</span>
+        <span class="ioc-group-title">API keys &amp; credentials</span>
+        <span class="ioc-group-count">14 patterns</span>
+      </div>
+      <div class="ioc-chips">
+        <span class="ioc-chip cred">Anthropic</span>
+        <span class="ioc-chip cred">OpenAI</span>
+        <span class="ioc-chip cred">AWS Key ID &amp; Secret</span>
+        <span class="ioc-chip cred">GitHub PAT</span>
+        <span class="ioc-chip cred">Stripe</span>
+        <span class="ioc-chip cred">SendGrid</span>
+        <span class="ioc-chip cred">Google API</span>
+        <span class="ioc-chip cred">Twilio</span>
+        <span class="ioc-chip cred">Mailgun</span>
+        <span class="ioc-chip cred">PayPal</span>
+        <span class="ioc-chip cred">Heroku</span>
+        <span class="ioc-chip cred">Generic API key</span>
+        <span class="ioc-chip cred">JWT</span>
+        <span class="ioc-chip cred">Private key header</span>
+      </div>
+    </div>
+
+    <div class="ioc-group">
+      <div class="ioc-group-hdr">
+        <span class="mb mb-red">BOT</span>
+        <span class="ioc-group-title">Bots &amp; webhooks</span>
+        <span class="ioc-group-count">4 patterns</span>
+      </div>
+      <div class="ioc-chips">
+        <span class="ioc-chip c2">Telegram Bot Token</span>
+        <span class="ioc-chip c2">Discord Webhook</span>
+        <span class="ioc-chip c2">Slack Webhook</span>
+        <span class="ioc-chip c2">Slack Token</span>
+      </div>
+    </div>
+
+    <div class="ioc-group">
+      <div class="ioc-group-hdr">
+        <span class="mb">CON</span>
+        <span class="ioc-group-title">Contact &amp; hidden services</span>
+        <span class="ioc-group-count">5 patterns</span>
+      </div>
+      <div class="ioc-chips">
+        <span class="ioc-chip">Emails</span>
+        <span class="ioc-chip">Phone numbers</span>
+        <span class="ioc-chip c2">.onion (v2 + v3)</span>
+        <span class="ioc-chip crypto">IBAN</span>
+        <span class="ioc-chip social">Steam</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep"/>
+
+<!-- 04 · EFA -->
+<div class="section" id="efa">
+  <div class="section-head">
+    <span class="section-idx">04</span>
+    <span class="section-eyebrow">File Analysis</span>
+  </div>
+  <div class="section-title">EFA - Static analysis of every fetched file</div>
+  <p class="section-sub">EFA (Extracted File Analysis) downloads and inspects root files, crawled files and the domain's main page HTML - detecting file types, calculating entropy, extracting printable strings and reading magic bytes without execution.</p>
+
+  <div class="feat3">
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-cyan">TYPE</span><div class="fcard-title">File type detection</div></div>
+      <div class="fcard-desc">Magic byte identification covers PE/EXE, ELF, PDF, ZIP/JAR/APK, Office (DOCX/XLSX/PPTX), HTML, JavaScript, PHP, Python, shell scripts, config files, binary blobs and more - independent of the server's Content-Type header.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-amber">ENT</span><div class="fcard-title">Entropy + packing detection</div></div>
+      <div class="fcard-desc">Shannon entropy computed over the full file body. Values above 7.2 bits/byte are labelled <em style="color:#f87171">packed / encrypted</em> - a strong indicator of UPX-packed malware, encrypted payloads or obfuscated scripts. Labelled low / medium / high / packed.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-cyan">STR</span><div class="fcard-title">Printable string extraction</div></div>
+      <div class="fcard-desc">Up to 500 printable strings (≥ 4 chars) extracted from binary and text files alike - exposing embedded URLs, C2 addresses, API endpoints, registry keys and debug paths left in compiled artefacts.</div>
+    </div>
+  </div>
+  <div class="feat3-2">
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-green">NEW</span><div class="fcard-title">Main page HTML analysis</div></div>
+      <div class="fcard-desc">The domain's root HTML (up to 1 MB) is automatically added to every full EFA run - so single-file SPAs, React bundles and inline script tags are analysed for file type, entropy and strings without requiring a separate crawl result.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb">FILE</span><div class="fcard-title">Per-file &amp; case-level controls</div></div>
+      <div class="fcard-desc">Each file row in Root Files and Crawled Files has individual EFA buttons - rerun analysis on a single file at any time. The EFA button on each case sidebar entry runs analysis across the entire case in one shot.</div>
+    </div>
+  </div>
+
+  <!-- Binary analysis pipeline -->
+  <div style="margin-top:2.5rem">
+    <div class="subhead">Binary analysis pipeline - PE · ELF · APK · IPA</div>
+    <div class="feat3">
+      <div class="fcard">
+        <div class="fcard-head"><span class="mb mb-cyan">HVI</span><div class="fcard-title">Hex View Inspector</div></div>
+        <div class="fcard-desc">Interactive hex dump with drag-to-select bytes. Mirrors highlights between hex and ASCII columns in real time. Smart clipboard: copies selection as hex string, raw bytes or escaped C literal. Large dumps render as native-selectable plain text for zero-lag scrolling.</div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-head"><span class="mb mb-cyan">DIE</span><div class="fcard-title">Binary Detection (diec)</div></div>
+        <div class="fcard-desc">Runs Detect-It-Easy on every binary - identifies compiler, linker, packer, protector and overlay. Results are colour-coded by category (Compiler / Linker / Tool / Packer / Overlay). Catches UPX, MPRESS, Themida, NSIS and 300+ other signatures.</div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-head"><span class="mb mb-cyan">DDV</span><div class="fcard-title">Disassembly + Decompile</div></div>
+        <div class="fcard-desc">radare2 + r2ghidra two-pane view. Left pane: annotated assembly with addresses, raw bytes and operands. Right pane: pseudo-C decompilation. Hover any function name to cross-highlight both panes. Click to scroll-mirror. Supports x86/x64, ARM, AArch64, MIPS and more.</div>
+      </div>
+    </div>
+    <div class="feat3-2" style="margin-top:1rem">
+      <div class="fcard">
+        <div class="fcard-head"><span class="mb mb-green">APK</span><div class="fcard-title">Android APK View</div></div>
+        <div class="fcard-desc">APKs are extracted and dissected without execution. Pure-Python binary AndroidManifest.xml parser surfaces package metadata, SDK versions and component lists. Dangerous permissions (SMS, camera, overlay, call log, fine location) are highlighted in amber. Native <code style="color:var(--accent)">.so</code> files are parsed as ELF and opened in DDV for disassembly. JADX decompiles all DEX bytecode to Java/Kotlin with a live class filter - no Java runtime config needed on the analyst side.</div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-head"><span class="mb mb-green">IPA</span><div class="fcard-title">iOS IPA View</div></div>
+        <div class="fcard-desc">IPA archives are unpacked and the main Mach-O binary is located automatically via Info.plist <code>CFBundleExecutable</code>. Fat binary slices are resolved to the arm64 slice. Entitlements are extracted from the embedded XML plist - dangerous keys like <code style="color:#f87171">com.apple.private.tcc.allow</code> are flagged in red. Frameworks and dylib load commands are listed. DDV (r2ghidra) runs on the main binary for disassembly and pseudo-C decompilation.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NT - Network Traffic Analysis -->
+  <div style="margin-top:2.5rem">
+    <div class="subhead">Text file analysis - JS · HTML · PHP · Python · Config</div>
+    <div class="feat3">
+      <div class="fcard">
+        <div class="fcard-head"><span class="mb mb-cyan">NT</span><div class="fcard-title">Network Traffic Analysis</div></div>
+        <div class="fcard-desc">For every text-based file (JavaScript, HTML, PHP, Python and more), EFA statically extracts all outbound network calls without execution - <code>fetch()</code>, <code>XMLHttpRequest.open()</code>, <code>axios</code>, jQuery AJAX, WebSocket connections, HTML form targets and PHP <code>file_get_contents</code> / <code>cURL</code> calls. Results are rendered in a DevTools-style request table with colour-coded method badges (GET · POST · DELETE …) and source-type labels. Hardcoded API base-URL constants and GraphQL operation names are extracted as separate groups.</div>
+      </div>
+      <div class="fcard">
+        <div class="fcard-head"><span class="mb mb-red">BEACON</span><div class="fcard-title">C2 Beacon Detection</div></div>
+        <div class="fcard-desc"><code style="color:#f87171">setInterval</code> and <code style="color:#f87171">setTimeout</code> callbacks that contain network calls (<code>fetch</code>, <code>XMLHttpRequest</code>, <code>axios</code>) are flagged as <strong style="color:#f87171">Beacon Patterns</strong> with the timer delay in milliseconds. This pinpoints keylogger heartbeats, credential-exfil loops and C2 check-in routines embedded in phishing-kit JavaScript - the exact patterns a browser's Network tab would expose at runtime, found statically without page execution.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="sep"/>
+
+<!-- 05 · VISUALIZATION & REPORTING -->
+<div class="section" id="visualization">
+  <div class="section-head">
+    <span class="section-idx">05</span>
+    <span class="section-eyebrow">Visualization &amp; Reporting</span>
+  </div>
+  <div class="section-title">Graph, dashboard and investigation reports</div>
+  <p class="section-sub">Beyond raw data - visualise relationships, track campaign metrics and export publication-ready investigation reports.</p>
+
+  <div class="feat3">
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-accent">GRPH</span><div class="fcard-title">Network graph (vis.js)</div></div>
+      <div class="fcard-desc">Per-case interactive network graph built with vis.js. Nodes represent domains, IPs, ASNs, CIDR blocks, nameservers, MX records, certificates, SANs, redirect targets, extracted social handles and PTR records. Edges encode the relationship type. Click any node for a detail panel. Physics layout with stabilisation - drag, zoom and fit controls.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-cyan">DASH</span><div class="fcard-title">Case dashboard</div></div>
+      <div class="fcard-desc">Aggregated statistics per case - HTTP status breakdown, Cloudflare distribution, server fingerprints, top ASNs, file type counts, MinHash LSH clusters and GeoIP world map. Charts powered by Apache ECharts.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb">RPT</span><div class="fcard-title">HTML investigation reports</div></div>
+      <div class="fcard-desc">One click on the RPT button generates a self-contained HTML file you can share or print to PDF. Light theme by default, switch to dark with one click. Includes a graph snapshot auto-rendered offscreen - no need to open the graph view first.</div>
+    </div>
+  </div>
+  <div class="feat3-2" style="margin-top:1rem">
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-amber">STIX</span><div class="fcard-title">STIX 2.1 export</div></div>
+      <div class="fcard-desc">Every result and case exports as a STIX 2.1 bundle - ready to import into MISP, OpenCTI or any TIP. The bundle includes <code style="color:#fb923c">domain-name</code>, <code style="color:#fb923c">ipv4-addr</code>, <code style="color:#fb923c">url</code>, <code style="color:#fb923c">email-addr</code>, <code style="color:#fb923c">cryptocurrency-wallet</code> and <code style="color:#fb923c">file</code> SCOs derived from DNS, EFI IOCs and EFA hashes. Enable the STIX toggle in the analysis options to auto-export on every scan.</div>
+    </div>
+    <div class="fcard">
+      <div class="fcard-head"><span class="mb mb-green">PRIV</span><div class="fcard-title">Private results</div></div>
+      <div class="fcard-desc">Toggle the <strong>Private</strong> option before scanning - or flip the padlock on any existing result - to exclude it from the public saved page. Private results remain fully accessible in your own workspace and are included in exports and reports. Nothing is shared between accounts.</div>
+    </div>
+  </div>
+
+  <!-- Report preview mockup -->
+  <div class="report-preview">
+    <div class="rp-bar">
+      <span class="rp-dot" style="background:#f87171"></span>
+      <span class="rp-dot" style="background:#fbbf24"></span>
+      <span class="rp-dot" style="background:#4ade80"></span>
+      <span class="rp-label">report_campaign_2026-05.html</span>
+      <span class="rp-badge">Light</span>
+      <span class="rp-badge" style="margin-left:.3rem">Dark</span>
+    </div>
+    <div class="rp-body">
+      <div class="rp-stat"><div class="rp-val">24</div><div class="rp-lbl">Targets</div></div>
+      <div class="rp-stat"><div class="rp-val g">18</div><div class="rp-lbl">Live</div></div>
+      <div class="rp-stat"><div class="rp-val a">4</div><div class="rp-lbl">Redirects</div></div>
+      <div class="rp-stat"><div class="rp-val r">2</div><div class="rp-lbl">Errors</div></div>
+      <div class="rp-stat"><div class="rp-val a">11</div><div class="rp-lbl">Cloudflare</div></div>
+      <div class="rp-stat"><div class="rp-val g">16</div><div class="rp-lbl">Screenshots</div></div>
+      <div class="rp-stat"><div class="rp-val c">87</div><div class="rp-lbl">IOCs</div></div>
+      <div class="rp-stat"><div class="rp-val c">142</div><div class="rp-lbl">Certs</div></div>
+      <div class="rp-stat"><div class="rp-val b">7</div><div class="rp-lbl">ASNs</div></div>
+      <div class="rp-stat"><div class="rp-val b">12</div><div class="rp-lbl">Countries</div></div>
+    </div>
+  </div>
+
+  <div class="icard-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr))">
+    <div class="icard">
+      <span class="mb">STAT</span>
+      <div>
+        <div class="icard-title">18-stat executive summary</div>
+        <div class="icard-desc">Targets, live/redirect/error counts, Cloudflare, screenshots, onion, certs, IOCs, IOC types, WHOIS emails, root files, crawled files, EFA files, ASNs, countries.</div>
+      </div>
+    </div>
+    <div class="icard">
+      <span class="mb">SNAP</span>
+      <div>
+        <div class="icard-title">Auto graph snapshot</div>
+        <div class="icard-desc">Graph rendered offscreen, stabilised and captured as a canvas image - no user interaction needed. Falls back to the open graph view if available.</div>
+      </div>
+    </div>
+    <div class="icard">
+      <span class="mb">FILE</span>
+      <div>
+        <div class="icard-title">Inline file contents</div>
+        <div class="icard-desc">Main page HTML + up to 12 root/crawled files per target re-fetched at report time and embedded as collapsible code blocks (300-line preview).</div>
+      </div>
+    </div>
+    <div class="icard">
+      <span class="mb">IOC</span>
+      <div>
+        <div class="icard-title">IOC aggregation table</div>
+        <div class="icard-desc">All IOCs across every target in the case, deduplicated and grouped by category - one table to scan for the full picture of the campaign's communication infrastructure.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<hr class="sep"/>
+
+<!-- 06 · SCENARIOS -->
+<div class="section" id="scenarios">
+  <div class="section-head">
+    <span class="section-idx">06</span>
+    <span class="section-eyebrow">Investigation scenarios</span>
+  </div>
+  <div class="section-title">Concrete examples</div>
+  <p class="section-sub">Real queries you can run the moment your scan finishes.</p>
+  <div class="scenarios">
+
+    <div class="scenario">
+      <div class="sc-info">
+        <span class="sc-tag tag-red">Phishing kit detection</span>
+        <div class="sc-title">Find exposed phishing infrastructure</div>
+        <div class="sc-desc">Phishing kits often leave gate.php, submit.php or credential log files openly accessible. Combine with a recent registration date to surface fresh campaigns.</div>
+        <div class="sc-finds">
+          <div class="sc-find">Active exfiltration endpoints left open on HTTP</div>
+          <div class="sc-find">Credential log files readable by anyone</div>
+          <div class="sc-find">Newly registered PHP-based phishing pages</div>
+        </div>
+      </div>
+      <div class="sc-code">
+        <div>
+          <div class="code-lbl">Exposed gate endpoint</div>
+          <pre><code><span class="fld">root_files.path</span> <span class="op">==</span> <span class="val">"/gate.php"</span>
+<span class="kw">AND</span> <span class="fld">root_files.status_code</span> <span class="op">==</span> <span class="val">200</span></code></pre>
+        </div>
+        <div>
+          <div class="code-lbl">Newly registered + PHP-powered</div>
+          <pre><code><span class="fld">whois.creation_date</span> <span class="op">contains</span> <span class="val">"2025"</span>
+<span class="kw">AND</span> <span class="fld">final_headers.x-powered-by</span>
+  <span class="op">contains</span> <span class="val">"PHP"</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <div class="sc-info">
+        <span class="sc-tag tag-pink">Romance scam / pig butchering</span>
+        <div class="sc-title">Detect romance scam contact infrastructure</div>
+        <div class="sc-desc">Romance scam sites embed WhatsApp numbers, Telegram handles, Tinder profiles and Kik usernames to move victims off-platform. EFI surfaces all of these from page source, JS bundles and config files automatically.</div>
+        <div class="sc-finds">
+          <div class="sc-find">WhatsApp wa.me links embedded in page JS</div>
+          <div class="sc-find">Telegram handles used as operator contacts</div>
+          <div class="sc-find">Tinder / Bumble profile links in HTML source</div>
+          <div class="sc-find">Signal group invite links in config files</div>
+        </div>
+      </div>
+      <div class="sc-code">
+        <div>
+          <div class="code-lbl">Sites with WhatsApp + Telegram IOCs</div>
+          <pre><code><span class="fld">efi.whatsapp</span> <span class="op">exists</span>
+<span class="kw">AND</span> <span class="fld">efi.telegram</span> <span class="op">exists</span></code></pre>
+        </div>
+        <div>
+          <div class="code-lbl">Dating app handles in source</div>
+          <pre><code><span class="fld">efi.tinder</span> <span class="op">exists</span>
+<span class="kw">OR</span> <span class="fld">efi.bumble</span> <span class="op">exists</span>
+<span class="kw">OR</span> <span class="fld">efi.kik</span> <span class="op">exists</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <div class="sc-info">
+        <span class="sc-tag tag-cyan">C2 dead drop detection</span>
+        <div class="sc-title">Find C2 dead-drop infrastructure</div>
+        <div class="sc-desc">Modern C2 frameworks use Google Docs, Notion, Pastebin and Dropbox as dead drops for staging payloads or issuing commands. EFI catches these URLs embedded in malicious pages or JS loaders.</div>
+        <div class="sc-finds">
+          <div class="sc-find">Pastebin / Ghostbin raw payload links</div>
+          <div class="sc-find">Google Drive / Docs staging links</div>
+          <div class="sc-find">Notion pages used for config delivery</div>
+          <div class="sc-find">Discord webhooks for C2 callbacks</div>
+        </div>
+      </div>
+      <div class="sc-code">
+        <div>
+          <div class="code-lbl">C2 dead-drop IOCs in source</div>
+          <pre><code><span class="fld">efi.pastebin</span> <span class="op">exists</span>
+<span class="kw">OR</span> <span class="fld">efi.google_drive</span> <span class="op">exists</span>
+<span class="kw">OR</span> <span class="fld">efi.notion</span> <span class="op">exists</span></code></pre>
+        </div>
+        <div>
+          <div class="code-lbl">C2 webhook callbacks</div>
+          <pre><code><span class="fld">efi.discord_webhook</span> <span class="op">exists</span>
+<span class="kw">OR</span> <span class="fld">efi.telegram_bot_token</span> <span class="op">exists</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <div class="sc-info">
+        <span class="sc-tag tag-indigo">Content clustering</span>
+        <div class="sc-title">Cluster domains sharing the same kit</div>
+        <div class="sc-desc">When multiple phishing sites use the same kit their files share identical bytes. SHA-1 catches exact copies; MinHash LSH bands catch near-duplicate variants with small modifications.</div>
+        <div class="sc-finds">
+          <div class="sc-find">Groups domains running the same phishing template</div>
+          <div class="sc-find">Tracks kit reuse across different hosting providers</div>
+          <div class="sc-find">LSH band match finds modified copies of the same kit</div>
+        </div>
+      </div>
+      <div class="sc-code">
+        <div>
+          <div class="code-lbl">Identical file content (SHA-1)</div>
+          <pre><code><span class="fld">root_files.sha1</span> <span class="op">==</span> <span class="val">"d41d8cd98f00b204…"</span></code></pre>
+        </div>
+        <div>
+          <div class="code-lbl">Similar content - LSH band</div>
+          <pre><code><span class="fld">root_files.minhash_bands</span>
+  <span class="op">contains</span> <span class="val">"a1b2"</span></code></pre>
+        </div>
+        <div>
+          <div class="code-lbl">Same visual layout (pHash)</div>
+          <pre><code><span class="fld">screenshot_phash</span> <span class="op">==</span> <span class="val">"0f3c3c3c0f0f0f0f"</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <div class="sc-info">
+        <span class="sc-tag tag-blue">Infrastructure mapping</span>
+        <div class="sc-title">Map a campaign's hosting footprint</div>
+        <div class="sc-desc">Attackers often register dozens of domains on the same ASN, registrar or nameserver. Pivot from one known indicator to expose the full infrastructure.</div>
+        <div class="sc-finds">
+          <div class="sc-find">Find all domains on the same hosting provider</div>
+          <div class="sc-find">Pivot from a nameserver to related registrations</div>
+          <div class="sc-find">Group by server fingerprint to identify shared backends</div>
+        </div>
+      </div>
+      <div class="sc-code">
+        <div>
+          <div class="code-lbl">All domains behind a specific ASN</div>
+          <pre><code><span class="fld">bgp.asn.asn</span> <span class="op">==</span> <span class="val">"AS209588"</span></code></pre>
+        </div>
+        <div>
+          <div class="code-lbl">Same registrar + server stack</div>
+          <pre><code><span class="fld">whois.registrar</span> <span class="op">contains</span> <span class="val">"namecheap"</span>
+<span class="kw">AND</span> <span class="fld">final_headers.server</span>
+  <span class="op">contains</span> <span class="val">"LiteSpeed"</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="scenario">
+      <div class="sc-info">
+        <span class="sc-tag tag-amber">Config &amp; source leaks</span>
+        <div class="sc-title">Detect exposed credentials and source code</div>
+        <div class="sc-desc">Misconfigured servers regularly expose .env files with API keys, database credentials, or open .git directories that leak the full source code of the phishing kit. EFI then extracts any credentials found in those files automatically.</div>
+        <div class="sc-finds">
+          <div class="sc-find">.env files with credentials accessible over HTTP</div>
+          <div class="sc-find">Open .git repositories exposing source code</div>
+          <div class="sc-find">Hardcoded API keys extracted automatically by EFI</div>
+        </div>
+      </div>
+      <div class="sc-code">
+        <div>
+          <div class="code-lbl">Exposed .env or .git config</div>
+          <pre><code>(<span class="fld">root_files.path</span> <span class="op">==</span> <span class="val">"/.env"</span>
+<span class="kw">OR</span> <span class="fld">root_files.path</span> <span class="op">==</span> <span class="val">"/.git/config"</span>)
+<span class="kw">AND</span> <span class="fld">root_files.status_code</span> <span class="op">==</span> <span class="val">200</span></code></pre>
+        </div>
+        <div>
+          <div class="code-lbl">Any extracted API key</div>
+          <pre><code><span class="fld">efi.api_key_anthropic</span> <span class="op">exists</span>
+<span class="kw">OR</span> <span class="fld">efi.api_key_openai</span> <span class="op">exists</span>
+<span class="kw">OR</span> <span class="fld">efi.api_key_aws_key</span> <span class="op">exists</span></code></pre>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="sep"/>
+
+<!-- 07 · QUERY LANGUAGE -->
+<div class="section">
+  <div class="section-head">
+    <span class="section-idx">07</span>
+    <span class="section-eyebrow">Query language</span>
+  </div>
+  <div class="section-title">Filter across everything you've scanned</div>
+  <p class="section-sub">Dot-notation field access, regex, list semantics and boolean logic - runs against every field including EFI IOC categories, EFA file types and entropy labels.</p>
+  <div class="query-grid">
+    <div class="qcard">
+      <div class="qcard-title">Cloudflare-proxied sites returning 200</div>
+      <pre><code><span class="fld">final_headers.cf-ray</span> <span class="op">exists</span>
+<span class="kw">AND</span> <span class="fld">final_status</span> <span class="op">==</span> <span class="val">200</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">Sites with packed / encrypted files (EFA)</div>
+      <pre><code><span class="fld">efa.entropy_label</span> <span class="op">==</span> <span class="val">"packed"</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">Extracted crypto wallet addresses</div>
+      <pre><code><span class="fld">efi.crypto_btc</span> <span class="op">exists</span>
+<span class="kw">OR</span> <span class="fld">efi.crypto_eth</span> <span class="op">exists</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">C2 Telegram bot in source</div>
+      <pre><code><span class="fld">efi.telegram_bot_token</span> <span class="op">exists</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">IPs on known bulletproof hosting</div>
+      <pre><code><span class="fld">bgp.asn.asn_description</span>
+  <span class="op">contains</span> <span class="val">"combahton"</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">Domains geolocated in Russia</div>
+      <pre><code><span class="fld">geo_ips.country_iso</span> <span class="op">==</span> <span class="val">"RU"</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">Sites using Google MX infrastructure</div>
+      <pre><code><span class="fld">dns.MX.exchange</span> <span class="op">contains</span> <span class="val">"google"</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">Cert SAN matching login subdomain</div>
+      <pre><code><span class="fld">certs.san</span> <span class="op">~=</span> <span class="val">"^login\\."</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">Pastebin / dead-drop links in source</div>
+      <pre><code><span class="fld">efi.pastebin</span> <span class="op">exists</span>
+<span class="kw">OR</span> <span class="fld">efi.google_drive</span> <span class="op">exists</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">EXE or ELF files served over HTTP</div>
+      <pre><code><span class="fld">efa.file_type</span> <span class="op">==</span> <span class="val">"pe"</span>
+<span class="kw">OR</span> <span class="fld">efa.file_type</span> <span class="op">==</span> <span class="val">"elf"</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">Screenshot available but no HTTPS</div>
+      <pre><code><span class="fld">screenshot</span> <span class="op">exists</span>
+<span class="kw">AND NOT</span> <span class="fld">final_url</span>
+  <span class="op">startswith</span> <span class="val">"https"</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">Discord webhooks exfiltrating data</div>
+      <pre><code><span class="fld">efi.discord_webhook</span> <span class="op">exists</span>
+<span class="kw">AND</span> <span class="fld">final_status</span> <span class="op">==</span> <span class="val">200</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">Android APKs served over HTTP</div>
+      <pre><code><span class="fld">efa.file_type</span> <span class="op">==</span> <span class="val">"apk"</span></code></pre>
+    </div>
+    <div class="qcard">
+      <div class="qcard-title">APK with dangerous permissions</div>
+      <pre><code><span class="fld">efa.apk.permissions</span>
+  <span class="op">contains</span> <span class="val">"READ_SMS"</span></code></pre>
+    </div>
+  </div>
+</div>
+
+<hr class="sep"/>
+
+<!-- 08 · ALERTS -->
+<div class="section">
+  <div class="section-head">
+    <span class="section-idx">08</span>
+    <span class="section-eyebrow">Alerts &amp; Monitoring</span>
+  </div>
+  <div class="section-title">Get notified when something changes</div>
+  <p class="section-sub">Link an alert to a case, pick a schedule, and the platform emails you the moment new results appear. Every triggered alert is also cached directly in the app.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-title">Create a case</div>
+      <div class="step-desc">Group your targets under a named case - e.g. <em style="color:var(--dim)">"Campaign May 2026"</em>. Everything scanned into that case stays together and can be queried as a unit.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-title">Scan your targets</div>
+      <div class="step-desc">Submit domains and IPs with the case selected. DNS, HTTP chains, hashes, screenshots, EFI IOCs and BGP data all land in that case's workspace immediately.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-title">Set an alert</div>
+      <div class="step-desc">Pick the case, enter your email, set a recurring frequency <em style="color:var(--dim)">(every 5 min → 24 h)</em> or a fixed daily time <em style="color:var(--dim)">(e.g. 08:00 UTC)</em>. Add an optional query filter to be notified only when specific conditions are met.</div>
+    </div>
+  </div>
+
+  <div class="icard-grid" style="grid-template-columns:repeat(2,1fr);margin-top:1.2rem">
+    <div class="icard">
+      <span class="mb mb-cyan">MAIL</span>
+      <div>
+        <div class="icard-title">Email notification</div>
+        <div class="icard-desc">Each alert email lists every new result - target, kind, HTTP status and final URL - so you can act immediately without opening the app.</div>
+      </div>
+    </div>
+    <div class="icard">
+      <span class="mb">CRON</span>
+      <div>
+        <div class="icard-title">Flexible scheduling</div>
+        <div class="icard-desc">Run every few minutes for active campaigns, or set a fixed daily time - e.g. a morning briefing at 08:00 UTC - for quieter monitoring.</div>
+      </div>
+    </div>
+    <div class="icard">
+      <span class="mb">CACHE</span>
+      <div>
+        <div class="icard-title">Cached in the app</div>
+        <div class="icard-desc">Every triggered alert is saved in the <strong style="color:var(--text)">Cached</strong> panel inside the app - case name, timestamp and a preview of the new results - so nothing is missed even if you don't check email.</div>
+      </div>
+    </div>
+    <div class="icard">
+      <span class="mb mb-green">DEDUP</span>
+      <div>
+        <div class="icard-title">No duplicate noise</div>
+        <div class="icard-desc">Already-seen results are never re-notified. The alert only fires for results that are genuinely new since the last run.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-wrap">
+  <div class="cta-title">Ready to start hunting?</div>
+  <p class="cta-sub">All results are private to your account. Nothing is shared between users.</p>
+  <div class="cta-actions">
+    <a href="/app" class="btn-hero btn-hero-primary">Open the platform</a>
+  </div>
+</div>
+
+<footer>&copy; {{YEAR}} {{APP_NAME}}</footer>
+</body>
+</html>

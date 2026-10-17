@@ -1,0 +1,9 @@
+# Normalise line endings so shell scripts and the Docker build behave the same
+# on Windows, macOS and Linux checkouts.
+* text=auto eol=lf
+*.sh text eol=lf
+Dockerfile text eol=lf
+Caddyfile text eol=lf
+Makefile text eol=lf
+*.png binary
+*.mmdb binary

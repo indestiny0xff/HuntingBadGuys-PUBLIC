@@ -1,0 +1,45 @@
+# ── Secrets and local configuration ─────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Local operator scripts ──────────────────────────────────────────────────
+# Anything in scripts/ is ignored unless listed below, so host-specific deploy
+# helpers (SSH keys, server addresses, credentials) can never be committed.
+scripts/*
+!scripts/ingest_feeds.py
+!scripts/update_deps.py
+!scripts/vps_setup.sh
+!scripts/backup.sh
+!scripts/restore.sh
+
+# ── Runtime data ────────────────────────────────────────────────────────────
+data/*
+!data/schema.sql
+backups/
+*.mmdb
+
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# ── Editors and OS ──────────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ── Agent / tooling scratch ─────────────────────────────────────────────────
+memory/
+.claude/

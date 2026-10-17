@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Threat Hunting Blog - {{APP_NAME}}</title>
+  <meta name="description" content="Research-driven intelligence reporting on cybercriminal operations, attack infrastructure, and evolving threat landscapes."/>
+  <link rel="canonical" href="{{PUBLIC_URL}}/blog"/>
+  <meta property="og:title" content="Threat Hunting Blog - {{APP_NAME}}"/>
+  <meta property="og:type" content="website"/>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#03050a;--surf:#080c18;--surf-s:#080c18;--surf2:#0d1224;--surf3:#111829;
+      --border:#18243a;--border2:#1e2f4a;
+      --text:#e4ecf8;--muted:#445569;--dim:#6882a4;
+      --accent:#7c3aed;--accent-g:linear-gradient(135deg,#7c3aed,#6d28d9);
+      --cyan:#06b6d4;--green:#10b981;--amber:#f59e0b;--red:#ef4444;--purple:#a855f7;
+      --font:'Inter',system-ui,sans-serif;
+      --mono:'JetBrains Mono','Fira Code',ui-monospace,monospace;
+      --r:10px;--r-sm:7px;--r-xs:4px}
+    *{box-sizing:border-box}
+    html{font-size:14px}
+    body{margin:0;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;
+      min-height:100vh;display:flex;flex-direction:column;
+      background-image:radial-gradient(ellipse 80% 40% at 50% -5%,rgba(var(--accent-rgb),.1) 0%,transparent 60%)}
+    .top-bar{height:2px;background:linear-gradient(90deg,var(--accent) 0%,#06b6d4 45%,#10b981 80%,var(--accent) 100%)}
+    nav{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:1rem;padding:0 1.5rem;height:52px;background:color-mix(in srgb, var(--bg) 88%, transparent);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+    .nav-logo{display:flex;align-items:center;gap:.55rem;text-decoration:none;flex-shrink:0}
+    .nav-logo-wm{font-size:.9rem;font-weight:800;letter-spacing:-.025em;background:linear-gradient(135deg,var(--text),var(--dim));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .nav-logo-wm em{font-style:normal;-webkit-text-fill-color:var(--accent)}
+    .nav-right{margin-left:auto;display:flex;align-items:center;gap:.5rem}
+    .nav-link{font-size:.75rem;font-weight:500;color:var(--dim);text-decoration:none;padding:.3rem .7rem;border:1px solid var(--border);border-radius:6px;background:var(--surf2);transition:all .15s}
+    .nav-link:hover{border-color:var(--border2);color:var(--text)}
+    main{flex:1;width:100%;max-width:780px;margin:0 auto;padding:2rem 1.1rem 4rem}
+    h1.page{font-size:1.6rem;font-weight:800;letter-spacing:-.02em;margin:.3rem 0 .2rem}
+    .sub{color:var(--muted);font-size:.85rem;margin-bottom:1.6rem}
+    .post{display:block;text-decoration:none;color:inherit;border:1px solid var(--border);border-radius:12px;padding:1rem 1.1rem;margin-bottom:1rem;background:var(--surf);transition:border-color .15s,transform .15s}
+    .post:hover{border-color:rgba(var(--accent-rgb),.5);transform:translateY(-2px)}
+    .post h2{font-size:1.05rem;margin:0 0 .35rem;font-weight:700}
+    .post .summary{color:var(--muted);font-size:.85rem;margin-bottom:.5rem}
+    .meta{display:flex;gap:.6rem;align-items:center;font-size:.68rem;color:var(--dim);flex-wrap:wrap}
+    .tag{font-size:.62rem;background:rgba(var(--accent-rgb),.12);border:1px solid rgba(var(--accent-rgb),.25);color:#a855f7;border-radius:20px;padding:.05rem .5rem}
+    .empty{color:var(--muted);text-align:center;padding:3rem 1rem;font-size:.9rem}
+    footer{padding:1rem;text-align:center;font-family:var(--mono);font-size:.65rem;font-weight:500;color:var(--muted);background:var(--surf);border-top:1px solid var(--border)}
+    @media(max-width:600px){
+      nav{height:auto;min-height:52px;flex-wrap:wrap;padding:.5rem .9rem;gap:.5rem}
+      .nav-right{margin-left:auto;flex-wrap:wrap;gap:.4rem}
+      .nav-link{font-size:.72rem;padding:.28rem .6rem}
+      main{padding:1.3rem .9rem 3rem}
+      h1.page{font-size:1.3rem}
+      .post{padding:.85rem .9rem}
+      .post h2{font-size:.98rem}
+    }
+  
+  
+    [data-theme=light] .nav-logo-wm, [data-theme=light] .logo-wm, [data-theme=light] h1, [data-theme=light] h2, [data-theme=light] h3 { color: var(--text); -webkit-text-fill-color: initial }
+  </style>
+</head>
+<body>
+<div class="top-bar"></div>
+<nav>
+  <a href="/" class="nav-logo"><span class="nav-logo-wm">{{BRAND_A}}<em>{{BRAND_B}}</em></span></a>
+  <div class="nav-right">
+    <a href="/app" class="nav-link">App</a>
+    <a href="/" class="nav-link">Public</a>
+    <a href="/intel" class="nav-link" id="nav-intel" style="display:none">Intel</a>
+    <a href="/blog" class="nav-link">Blog</a>
+    <div class="theme-menu"><button type="button" class="nav-link theme-btn" onclick="hbgToggleThemeMenu(event)" aria-haspopup="true" aria-expanded="false" title="Accent colour"><span class="theme-dot"></span>Theme</button><div class="theme-list" role="menu"><button type="button" role="menuitem" data-theme="purple" onclick="hbgApplyTheme('purple')"><span class="theme-dot" style="background:#7c3aed"></span>Purple</button><button type="button" role="menuitem" data-theme="red" onclick="hbgApplyTheme('red')"><span class="theme-dot" style="background:#ef4444"></span>Red</button><button type="button" role="menuitem" data-theme="green" onclick="hbgApplyTheme('green')"><span class="theme-dot" style="background:#22c55e"></span>Green</button><button type="button" role="menuitem" data-theme="blue" onclick="hbgApplyTheme('blue')"><span class="theme-dot" style="background:#3b82f6"></span>Blue</button><button type="button" role="menuitem" data-theme="black" onclick="hbgApplyTheme('black')"><span class="theme-dot" style="background:var(--text)"></span>Black</button></div></div>
+    <button type="button" class="nav-link mode-btn" onclick="hbgToggleMode()" title="Light / dark mode" aria-label="Toggle light or dark mode"><span class="mode-icon">&#9728;</span></button>
+  </div>
+</nav>
+<script>fetch('/auth/me').then(r=>{if(r.ok){const e=document.getElementById('nav-intel');if(e)e.style.display=''}}).catch(()=>{});</script>
+<main>
+  <h1 class="page">Threat Hunting Blog</h1>
+  <div class="sub">Research-driven intelligence reporting on cybercriminal operations, attack infrastructure, and evolving threat landscapes.</div>
+  <div id="list"><div class="empty">Loading…</div></div>
+</main>
+<script>
+  const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const fmtDate=s=>{if(!s)return'';const d=new Date(s);return isNaN(d)?'':d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'})};
+  (async function(){
+    const list=document.getElementById('list');
+    try{
+      const r=await fetch('/api/blog/posts');
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      const {posts}=await r.json();
+      if(!posts.length){list.innerHTML='<div class="empty">No posts yet - check back soon.</div>';return}
+      list.innerHTML=posts.map(p=>`<a class="post" href="/blog/${encodeURIComponent(p.slug)}">
+        <h2>${esc(p.title)}</h2>
+        ${p.summary?`<div class="summary">${esc(p.summary)}</div>`:''}
+        <div class="meta">
+          ${p.author?`<span>by ${esc(p.author)}</span>`:''}
+          ${p.published_at?`<span>${fmtDate(p.published_at)}</span>`:''}
+          ${(p.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}
+        </div>
+      </a>`).join('');
+    }catch(e){list.innerHTML=`<div class="empty">Could not load posts (${esc(e.message)})</div>`}
+  })();
+</script>
+<footer>&copy; {{YEAR}} {{APP_NAME}}</footer>
+</body>
+</html>

@@ -1,0 +1,36 @@
+# Reverse proxy in front of the app.
+#
+# SITE_ADDRESS comes from .env:
+#   http://localhost          plain HTTP for local use
+#   hunt.example.com          automatic HTTPS via Let's Encrypt (DNS must point here)
+#
+# Caddy also handles HTTP -> HTTPS redirects and certificate renewal.
+
+{
+	email {$ACME_EMAIL:admin@localhost}
+	servers {
+		trusted_proxies static private_ranges
+	}
+}
+
+{$SITE_ADDRESS} {
+	encode zstd gzip
+
+	# Long-running analysis endpoints (file analysis, host probes) need
+	# generous upstream timeouts; the app enforces its own per-task limits.
+	reverse_proxy app:8000 {
+		transport http {
+			read_timeout 600s
+			write_timeout 600s
+		}
+	}
+
+	request_body {
+		max_size 16MB
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="7" fill="#080c16"/>
+  <!-- Hook shape -->
+  <path d="M16 6 C16 6 22 6 22 12 C22 17 18 19 16 19 C14 19 12 18 12 16 C12 14 13.5 13 15 13 C16.5 13 17 14 17 15 C17 16 16.2 16.5 15.5 16.5" stroke="#7c3aed" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <!-- Hook tip -->
+  <path d="M15.5 16.5 C14.5 16.5 13.5 17.5 14 19 L15 26" stroke="#7c3aed" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  <path d="M15 26 C15 26 12 25 11 27" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" fill="none"/>
+</svg>

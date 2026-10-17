@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="robots" content="noindex, nofollow"/>
+  <title>Admin - {{APP_NAME}}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #03050a; --surf: #080c18; --surf2: #0d1224; --surf3: #111829;
+      --border: #18243a; --border2: #1e2f4a;
+      --text: #e4ecf8; --muted: #5a6b82; --dim: #8497b0;
+      --accent: #7c3aed; --accent2: #6d28d9;
+      --green: #10b981; --amber: #f59e0b; --red: #ef4444; --cyan: #06b6d4;
+      --violet: #a855f7; --teal: #2dd4bf;
+      --mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+      --ui: 'Inter', system-ui, -apple-system, sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0 }
+    html { font-size: 14px }
+
+    body {
+      font-family: var(--ui);
+      background: var(--bg);
+      background-image: radial-gradient(ellipse 80% 40% at 50% -5%, rgba(var(--accent-rgb),.1) 0%, transparent 60%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit }
+
+    /* ── Nav (matches the marketing/app pages) ── */
+    .top-bar { height: 2px; background: linear-gradient(90deg,var(--accent) 0%,#06b6d4 45%,#10b981 80%,var(--accent) 100%) }
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      display: flex; align-items: center; gap: 1rem;
+      padding: 0 1.5rem; height: 52px;
+      background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .nav-logo { display: flex; align-items: center; gap: .55rem; text-decoration: none; flex-shrink: 0 }
+    .nav-logo-wm { font-size: .9rem; font-weight: 800; letter-spacing: -.025em;
+                   background: linear-gradient(135deg, var(--text), var(--dim));
+                   -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text }
+    .nav-logo-wm em { font-style: normal; -webkit-text-fill-color: var(--accent) }
+    .nav-tag { font-size: .6rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+               color: var(--dim); background: var(--surf2); border: 1px solid var(--border2);
+               padding: .14rem .45rem; border-radius: 5px; flex-shrink: 0 }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: .5rem; flex-wrap: wrap }
+    .nav-link, .btn { font-size: .75rem; font-weight: 500; color: var(--dim); text-decoration: none;
+                padding: .3rem .7rem; border: 1px solid var(--border); border-radius: 6px;
+                background: var(--surf2); transition: all .15s; cursor: pointer }
+    .nav-link:hover, .btn:hover { border-color: var(--border2); color: var(--text) }
+    .hdr-user {
+      font-size: .72rem; color: var(--cyan);
+      border: 1px solid rgba(6,182,212,.25); background: rgba(6,182,212,.07);
+      padding: .25rem .6rem; border-radius: 6px;
+    }
+
+    /* ── Status strip ── */
+    .statusbar {
+      display: flex; align-items: center; gap: 1.2rem;
+      padding: .4rem 1.5rem;
+      background: var(--surf);
+      border-bottom: 1px solid var(--border);
+      font-size: .67rem; color: var(--muted);
+      flex-shrink: 0;
+    }
+    .status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      display: inline-block; margin-right: .35rem;
+    }
+    .status-item { display: flex; align-items: center; gap: .3rem }
+    #status-clock { font-family: var(--mono); color: var(--dim); letter-spacing: .04em }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex; border-bottom: 1px solid var(--border);
+      background: var(--surf); padding: 0 1.5rem; flex-shrink: 0; gap: .2rem;
+    }
+    .tab {
+      padding: .6rem 1.1rem; font-size: .73rem; font-weight: 600; font-family: var(--ui);
+      letter-spacing: .03em; color: var(--muted); background: none;
+      border: none; cursor: pointer; border-bottom: 2px solid transparent;
+      transition: all .12s;
+    }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent) }
+    .tab:hover:not(.active) { color: var(--dim) }
+
+    /* ── Content area ── */
+    .content { flex: 1; padding: .9rem 1.4rem; overflow: auto; min-height: 0 }
+
+    /* ── Toolbar ── */
+    .toolbar {
+      display: flex; gap: .45rem; align-items: center;
+      margin-bottom: .7rem; flex-wrap: wrap;
+    }
+    .toolbar input[type=text] {
+      flex: 1; min-width: 160px; max-width: 280px;
+      padding: .32rem .6rem; font-size: .72rem; font-family: var(--mono);
+      background: var(--surf); border: 1px solid var(--border);
+      color: var(--text); border-radius: 3px; outline: none;
+    }
+    .toolbar input[type=text]:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(0,212,255,.1) }
+    .toolbar input[type=text]::placeholder { color: var(--muted) }
+    .toolbar select {
+      padding: .32rem .45rem; font-size: .7rem; font-family: var(--mono);
+      background: var(--surf); border: 1px solid var(--border);
+      color: var(--text); border-radius: 3px; cursor: pointer;
+    }
+    .toolbar button {
+      padding: .3rem .7rem; font-size: .68rem; font-family: var(--mono);
+      background: var(--surf2); border: 1px solid var(--border);
+      color: var(--dim); border-radius: 3px; cursor: pointer;
+      transition: all .1s;
+    }
+    .toolbar button:hover { color: var(--text); border-color: var(--dim) }
+    .toolbar label {
+      font-size: .7rem; color: var(--muted);
+      display: flex; align-items: center; gap: .35rem;
+      cursor: pointer; user-select: none;
+    }
+    .count { font-size: .67rem; color: var(--muted); margin-left: auto; letter-spacing: .04em }
+
+    /* ── Source pills ── */
+    .source-pills { display: flex; gap: .25rem }
+    .src-pill {
+      padding: .25rem .6rem; font-size: .65rem; font-family: var(--ui);
+      letter-spacing: .06em; text-transform: uppercase;
+      border: 1px solid var(--border); border-radius: 3px;
+      cursor: pointer; transition: all .12s;
+      background: transparent; color: var(--muted);
+    }
+    .src-pill:hover { color: var(--dim); border-color: var(--dim) }
+    .src-pill.active[data-src=""] { border-color: var(--dim); color: var(--text) }
+    .src-pill.active[data-src="app"] { border-color: var(--violet); color: var(--violet); background: rgba(167,139,250,.08) }
+    .src-pill.active[data-src="access"] { border-color: var(--cyan); color: var(--cyan); background: rgba(0,212,255,.07) }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: .72rem }
+    thead tr { background: var(--surf2); position: sticky; top: 0; z-index: 2 }
+    th {
+      padding: .45rem .7rem; text-align: left; color: var(--muted);
+      font-size: .62rem; font-weight: 600; font-family: var(--ui);
+      letter-spacing: .1em; text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: .35rem .7rem; border-bottom: 1px solid rgba(26,40,64,.6);
+      vertical-align: top;
+    }
+    tbody tr { border-left: 2px solid transparent; transition: background .08s }
+    tbody tr:hover { background: rgba(255,255,255,.025) }
+
+    /* Level-based left border */
+    tbody tr.lv-row-ERROR   { border-left-color: var(--red) }
+    tbody tr.lv-row-WARNING { border-left-color: var(--amber) }
+    tbody tr.lv-row-INFO    { border-left-color: var(--border2) }
+    tbody tr.lv-row-DEBUG   { border-left-color: transparent }
+    tbody tr.src-access     { background: rgba(0,212,255,.018) }
+
+    .ts { font-family: var(--mono); font-size: .67rem; color: var(--muted); white-space: nowrap }
+    .log-msg { font-family: var(--mono); font-size: .7rem; white-space: pre-wrap; word-break: break-word }
+    .logger-cell {
+      font-size: .65rem; color: var(--muted);
+      max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .logger-cell.src-app    { color: var(--violet) }
+    .logger-cell.src-access { color: var(--cyan) }
+
+    /* Level badges */
+    .lv-badge {
+      display: inline-block; padding: .08rem .38rem;
+      font-size: .62rem; font-weight: 600; font-family: var(--ui);
+      letter-spacing: .06em; border-radius: 2px; white-space: nowrap;
+    }
+    .lv-INFO    { background: rgba(0,212,255,.1); color: var(--cyan) }
+    .lv-WARNING { background: rgba(245,166,35,.1); color: var(--amber) }
+    .lv-ERROR   { background: rgba(240,64,96,.14); color: var(--red); box-shadow: 0 0 6px rgba(240,64,96,.15) }
+    .lv-DEBUG   { background: rgba(74,96,128,.15); color: var(--muted) }
+
+    /* ── Users panel ── */
+    .badge-admin {
+      display: inline-block; padding: .08rem .42rem;
+      background: rgba(91,95,240,.15); color: var(--accent2);
+      border: 1px solid rgba(91,95,240,.3);
+      border-radius: 3px; font-size: .63rem; font-weight: 600;
+      font-family: var(--ui); letter-spacing: .06em;
+    }
+    .btn-del {
+      padding: .2rem .55rem; font-size: .67rem; font-family: var(--mono);
+      background: rgba(240,64,96,.08); border: 1px solid rgba(240,64,96,.25);
+      color: var(--red); border-radius: 3px; cursor: pointer; transition: all .1s;
+    }
+    .btn-del:hover:not(:disabled) { background: rgba(240,64,96,.18); border-color: rgba(240,64,96,.5) }
+    .btn-del:disabled { opacity: .3; cursor: not-allowed }
+    .btn-edit {
+      padding: .2rem .55rem; font-size: .67rem; font-family: var(--mono); margin-right: .3rem;
+      background: var(--surf2); border: 1px solid var(--border); color: var(--dim);
+      border-radius: 3px; cursor: pointer; transition: all .1s;
+    }
+    .btn-edit:hover { color: var(--text); border-color: var(--dim) }
+    .edit-row td { background: var(--surf); border-bottom: 1px solid var(--border) }
+
+    .empty { color: var(--muted); font-size: .78rem; text-align: center; padding: 2.5rem 0 }
+
+    /* ── Password form ── */
+    .pw-form { display: flex; flex-wrap: wrap; gap: .45rem; align-items: center; margin: .6rem 0 .9rem;
+               padding: .6rem .7rem; border: 1px solid var(--border); border-radius: 4px; background: var(--surf) }
+    .pw-form strong { font-size: .62rem; letter-spacing: .1em; color: var(--muted); margin-right: .3rem }
+    .pw-form input { padding: .32rem .6rem; font-size: .72rem; font-family: var(--mono); background: var(--surf2);
+                     border: 1px solid var(--border); color: var(--text); border-radius: 3px; outline: none; min-width: 170px }
+    .pw-form input:focus { border-color: var(--accent) }
+    .pw-form button { padding: .3rem .7rem; font-size: .68rem; font-family: var(--mono); background: var(--accent);
+                      border: 1px solid var(--accent); color: #fff; border-radius: 3px; cursor: pointer }
+    #pw-status { font-size: .68rem; color: var(--dim) }
+
+    /* ── Import status ── */
+    #import-status { font-size: .72rem; margin-bottom: .5rem; padding: .4rem .7rem; border-radius: 3px; border: 1px solid transparent }
+
+    /* ── Footer ── */
+    footer {
+      padding: 1rem; text-align: center; font-family: var(--mono);
+      font-size: .65rem; font-weight: 500; color: var(--muted);
+      background: var(--surf); border-top: 1px solid var(--border); flex-shrink: 0;
+    }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px }
+    ::-webkit-scrollbar-track { background: var(--surf) }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px }
+    ::-webkit-scrollbar-thumb:hover { background: var(--dim) }
+
+    /* ── Changelog ── */
+    .changelog { max-width: 860px; font-size: .8rem; line-height: 1.55; color: var(--text) }
+    .changelog h1 { font-size: 1.1rem; margin: 0 0 .8rem; letter-spacing: -.01em }
+    .changelog h2 { font-size: .9rem; margin: 1.4rem 0 .5rem; padding-bottom: .3rem; border-bottom: 1px solid var(--border); color: var(--accent) }
+    .changelog h3 { font-size: .74rem; margin: .9rem 0 .35rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim) }
+    .changelog ul { padding-left: 1.2rem; margin: .3rem 0 .6rem }
+    .changelog li { margin: .2rem 0 }
+    .changelog p { margin: .4rem 0 }
+    .changelog code { font-family: var(--mono); font-size: .72rem; background: var(--surf2); padding: .05rem .3rem; border-radius: 3px }
+    .changelog a { color: var(--accent) }
+
+    /* ── Refresh animation ── */
+    @keyframes spin { to { transform: rotate(360deg) } }
+    .spinning { display: inline-block; animation: spin .6s linear infinite }
+  
+  
+    [data-theme=light] .nav-logo-wm, [data-theme=light] .logo-wm, [data-theme=light] h1, [data-theme=light] h2, [data-theme=light] h3 { color: var(--text); -webkit-text-fill-color: initial }
+  </style>
+</head>
+<body>
+  <div class="top-bar"></div>
+  <nav>
+    <a href="/" class="nav-logo"><span class="nav-logo-wm">{{BRAND_A}}<em>{{BRAND_B}}</em></span></a>
+    <span class="nav-tag">Admin Console</span>
+    <span class="nav-tag" id="nav-version">v-</span>
+    <div class="nav-right">
+      <span class="hdr-user" id="hdr-user">-</span>
+      <a href="/app" class="nav-link">App</a>
+      <a href="/" class="nav-link">Public</a>
+      <a href="/intel" class="nav-link" id="nav-intel" style="display:none">Intel</a>
+      <a href="/blog" class="nav-link">Blog</a>
+      <div class="theme-menu"><button type="button" class="nav-link theme-btn" onclick="hbgToggleThemeMenu(event)" aria-haspopup="true" aria-expanded="false" title="Accent colour"><span class="theme-dot"></span>Theme</button><div class="theme-list" role="menu"><button type="button" role="menuitem" data-theme="purple" onclick="hbgApplyTheme('purple')"><span class="theme-dot" style="background:#7c3aed"></span>Purple</button><button type="button" role="menuitem" data-theme="red" onclick="hbgApplyTheme('red')"><span class="theme-dot" style="background:#ef4444"></span>Red</button><button type="button" role="menuitem" data-theme="green" onclick="hbgApplyTheme('green')"><span class="theme-dot" style="background:#22c55e"></span>Green</button><button type="button" role="menuitem" data-theme="blue" onclick="hbgApplyTheme('blue')"><span class="theme-dot" style="background:#3b82f6"></span>Blue</button><button type="button" role="menuitem" data-theme="black" onclick="hbgApplyTheme('black')"><span class="theme-dot" style="background:var(--text)"></span>Black</button></div></div>
+      <button type="button" class="nav-link mode-btn" onclick="hbgToggleMode()" title="Light / dark mode" aria-label="Toggle light or dark mode"><span class="mode-icon">&#9728;</span></button>
+    </div>
+  </nav>
+
+  <div class="statusbar">
+    <div class="status-item"><span class="status-dot"></span>SYSTEM ONLINE</div>
+    <div class="status-item" id="status-clock">-</div>
+    <div class="status-item" id="status-warning" style="display:none;color:var(--amber);font-weight:600"></div>
+    <div class="status-item" style="margin-left:auto">
+      <span id="status-log-count" style="color:var(--dim)">-</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" id="tab-btn-logs" onclick="showTab('logs')">LOGS</button>
+    <button class="tab" id="tab-btn-users" onclick="showTab('users')">ACCOUNTS</button>
+    <button class="tab" id="tab-btn-changelog" onclick="showTab('changelog')">CHANGELOG</button>
+    <button class="tab" id="tab-btn-system" onclick="showTab('system')">SYSTEM</button>
+  </div>
+
+  <div class="content">
+
+    <!-- Logs panel -->
+    <div id="panel-logs">
+      <div class="toolbar">
+        <input type="text" id="log-search" placeholder="search logs…" oninput="renderLogs()"/>
+        <select id="log-level" onchange="renderLogs()">
+          <option value="">ALL LEVELS</option>
+          <option value="ERROR">ERROR</option>
+          <option value="WARNING">WARNING</option>
+          <option value="INFO">INFO</option>
+          <option value="DEBUG">DEBUG</option>
+        </select>
+        <div class="source-pills">
+          <button class="src-pill active" data-src=""      onclick="setSrc(this)">ALL</button>
+          <button class="src-pill"        data-src="app"   onclick="setSrc(this)">APP</button>
+          <button class="src-pill"        data-src="access"onclick="setSrc(this)">ACCESS</button>
+        </div>
+        <select id="log-user" onchange="renderLogs()">
+          <option value="">ALL USERS</option>
+        </select>
+        <button id="refresh-btn" onclick="fetchLogs()">&#8635; REFRESH</button>
+        <button onclick="exportLogs()">&#8595; EXPORT</button>
+        <label><input type="checkbox" id="auto-refresh" checked/> AUTO 5s</label>
+        <span class="count" id="log-count"></span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>TIMESTAMP</th>
+            <th>LEVEL</th>
+            <th>SOURCE</th>
+            <th>MESSAGE</th>
+          </tr>
+        </thead>
+        <tbody id="log-tbody"><tr><td colspan="4" class="empty">LOADING…</td></tr></tbody>
+      </table>
+    </div>
+
+    <!-- Users panel -->
+    <div id="panel-users" hidden>
+      <div class="toolbar">
+        <button onclick="fetchUsers()">&#8635; REFRESH</button>
+        <button onclick="exportUsers()">&#8595; EXPORT JSON</button>
+        <label style="cursor:pointer">
+          <span style="padding:.3rem .7rem;font-size:.68rem;background:var(--surf2);border:1px solid var(--border);color:var(--dim);border-radius:3px;cursor:pointer">&#8593; IMPORT JSON</span>
+          <input type="file" id="import-file" accept=".json,application/json" style="display:none" onchange="importUsers(this)"/>
+        </label>
+        <span class="count" id="user-count"></span>
+      </div>
+      <div id="import-status" style="display:none"></div>
+      <form class="pw-form" onsubmit="createUser(event)">
+        <strong>CREATE ACCOUNT</strong>
+        <input type="text" id="nu-username" placeholder="username (3-32 chars)" autocomplete="off" required minlength="3" maxlength="32" pattern="[a-zA-Z0-9_-]+"/>
+        <input type="password" id="nu-password" placeholder="password (8+ chars)" autocomplete="new-password" required minlength="8" maxlength="128"/>
+        <label style="font-size:.7rem;color:var(--dim);display:flex;align-items:center;gap:.3rem"><input type="checkbox" id="nu-admin"/> admin</label>
+        <button type="submit">CREATE</button>
+        <span id="nu-status"></span>
+      </form>
+      <form class="pw-form" onsubmit="changePassword(event)">
+        <strong>CHANGE MY PASSWORD</strong>
+        <input type="password" id="pw-current" placeholder="current password" autocomplete="current-password" required/>
+        <input type="password" id="pw-new" placeholder="new password (8+ chars)" autocomplete="new-password" required minlength="8" maxlength="128"/>
+        <input type="password" id="pw-new2" placeholder="repeat new password" autocomplete="new-password" required/>
+        <button type="submit">UPDATE</button>
+        <span id="pw-status"></span>
+      </form>
+      <table>
+        <thead><tr><th>USERNAME</th><th>CREATED</th><th>SIGN-IN</th><th>ROLE</th><th style="width:210px"></th></tr></thead>
+        <tbody id="user-tbody"><tr><td colspan="5" class="empty">LOADING</td></tr></tbody>
+      </table>
+    </div>
+
+
+    <!-- Changelog panel -->
+    <div id="panel-changelog" hidden>
+      <div class="toolbar">
+        <span class="count" id="changelog-version" style="margin-left:0"></span>
+        <a class="btn" href="https://github.com/indestiny0xff/HuntingBadGuys-PUBLIC/releases" target="_blank" rel="noopener" style="margin-left:auto;text-decoration:none">RELEASES</a>
+      </div>
+      <article class="changelog" id="changelog-body"><p class="empty">LOADING</p></article>
+    </div>
+
+    <!-- System panel -->
+    <div id="panel-system" hidden>
+      <div class="toolbar">
+        <a class="btn" href="/api/docs" target="_blank" rel="noopener" style="text-decoration:none">API REFERENCE (SWAGGER)</a>
+        <a class="btn" href="/api/openapi.json" target="_blank" rel="noopener" style="text-decoration:none">OPENAPI.JSON</a>
+      </div>
+      <table>
+        <thead><tr><th>SETTING</th><th>VALUE</th></tr></thead>
+        <tbody id="system-tbody"><tr><td colspan="2" class="empty">LOADING</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer>&copy; {{YEAR}} {{APP_NAME}}</footer>
+
+  <script>
+    /* ── State ── */
+    let _logs = [], _users = [], _me = null, _admins = [], _refreshTimer = null;
+    let _activeSrc = '';
+
+    /* ── Clock ── */
+    function tickClock() {
+      const now = new Date().toUTCString().replace('GMT','UTC');
+      document.getElementById('status-clock').textContent = now;
+    }
+    tickClock();
+    setInterval(tickClock, 1000);
+
+    /* ── Init ── */
+    async function init() {
+      const mr = await fetch('/auth/me').catch(() => null);
+      if (!mr?.ok) { location.href = '/'; return; }
+      _me = await mr.json();
+      document.getElementById('hdr-user').textContent = _me.username;
+      const intelLink = document.getElementById('nav-intel');
+      if (intelLink) intelLink.style.display = '';
+
+      const ar = await fetch('/admin/api/admins').catch(() => null);
+      if (ar?.ok) _admins = await ar.json();
+
+      await fetchLogs();
+      await fetchUsers();
+      await fetchInfo();
+      await fetchChangelog();
+
+      _refreshTimer = setInterval(() => {
+        if (document.getElementById('auto-refresh').checked) fetchLogs();
+      }, 5000);
+    }
+
+    /* ── Source pill selector ── */
+    function setSrc(el) {
+      document.querySelectorAll('.src-pill').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      _activeSrc = el.dataset.src;
+      renderLogs();
+    }
+
+    /* ── Source classifier ── */
+    function logSrc(e) {
+      const l = (e.logger || '').toLowerCase();
+      if (l === 'uvicorn.access') return 'access';
+      if (l.startsWith('app') || l.startsWith('uvicorn.error')) return 'app';
+      return 'app';
+    }
+
+    function extractUser(msg) {
+      const m = msg.match(/^\[(?:admin:)?([^\]]+)\]/);
+      return m ? m[1] : null;
+    }
+
+    /* ── Filter helper (shared by render + export) ── */
+    function applyFilters(logs, { q, lvl, src, usr } = {}) {
+      q   = q   ?? document.getElementById('log-search').value.toLowerCase();
+      lvl = lvl ?? document.getElementById('log-level').value;
+      src = src ?? _activeSrc;
+      usr = usr ?? document.getElementById('log-user').value;
+      return logs.filter(e =>
+        (!lvl || e.level === lvl) &&
+        (!usr || extractUser(e.msg) === usr) &&
+        (!src || logSrc(e) === src) &&
+        (!q   || e.msg.toLowerCase().includes(q) || (e.logger || '').toLowerCase().includes(q))
+      );
+    }
+
+    /* ── Fetch ── */
+    async function fetchLogs() {
+      const btn = document.getElementById('refresh-btn');
+      btn.innerHTML = '<span class="spinning">&#8635;</span> REFRESH';
+      const r = await fetch('/admin/api/logs').catch(() => null);
+      btn.innerHTML = '&#8635; REFRESH';
+      if (!r?.ok) return;
+      _logs = await r.json();
+
+      /* Rebuild user dropdown */
+      const users = [...new Set(_logs.map(e => extractUser(e.msg)).filter(Boolean))].sort();
+      const sel = document.getElementById('log-user');
+      const cur = sel.value;
+      sel.innerHTML = '<option value="">ALL USERS</option>' +
+        users.map(u => `<option value="${esc(u)}" ${u === cur ? 'selected' : ''}>${esc(u)}</option>`).join('');
+
+      renderLogs();
+    }
+
+    async function fetchUsers() {
+      const r = await fetch('/admin/api/users').catch(() => null);
+      if (!r?.ok) return;
+      _users = await r.json();
+      renderUsers();
+    }
+
+    /* ── Render logs ── */
+    function renderLogs() {
+      const filtered = applyFilters(_logs);
+      const shown = filtered.slice().reverse();
+      const total = _logs.length;
+      document.getElementById('log-count').textContent = shown.length + ' / ' + total;
+      document.getElementById('status-log-count').textContent =
+        total + ' ENTRIES BUFFERED';
+
+      const tbody = document.getElementById('log-tbody');
+      if (!shown.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty">NO ENTRIES MATCH</td></tr>';
+        return;
+      }
+      const src_labels = { app: 'app', access: 'uvicorn.access' };
+      tbody.innerHTML = shown.map(e => {
+        const src = logSrc(e);
+        const loggerClass = src === 'access' ? 'logger-cell src-access' : 'logger-cell src-app';
+        const rowClass = `lv-row-${e.level}${src === 'access' ? ' src-access' : ''}`;
+        return `<tr class="${rowClass}">
+          <td class="ts">${esc(e.ts.replace('T',' ').slice(0,19))}</td>
+          <td><span class="lv-badge lv-${e.level}">${esc(e.level)}</span></td>
+          <td class="${loggerClass}" title="${esc(e.logger)}">${esc(e.logger)}</td>
+          <td class="log-msg">${esc(e.msg)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    /* ── Render users ── */
+    let _editing = null;  // id of the account whose edit row is open
+    function renderUsers() {
+      document.getElementById('user-count').textContent =
+        _users.length + ' account' + (_users.length !== 1 ? 's' : '');
+      const tbody = document.getElementById('user-tbody');
+      if (!_users.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty">NO ACCOUNTS</td></tr>';
+        return;
+      }
+      tbody.innerHTML = _users.map(u => {
+        const isSelf = _me && u.id === _me.id;
+        const canDel = !u.env_admin && !isSelf;
+        const reason = isSelf ? 'Cannot delete your own account'
+                     : u.env_admin ? 'Defined by HUNTER_ADMIN_USERNAMES' : '';
+        const role = u.is_admin
+          ? `<span class="badge-admin" title="${u.env_admin ? 'granted by the environment' : 'granted in the console'}">ADMIN${u.env_admin ? ' (ENV)' : ''}</span>`
+          : '';
+        const row = `<tr>
+          <td style="font-weight:500">${esc(u.username)}${isSelf ? ' <span style="color:var(--muted);font-size:.62rem">(you)</span>' : ''}</td>
+          <td class="ts">${esc((u.created_at || '').slice(0,10))}</td>
+          <td class="ts">${esc(u.auth_provider === 'oidc' ? 'SSO' : 'password')}</td>
+          <td>${role}</td>
+          <td style="white-space:nowrap">
+            <button class="btn-edit" onclick="toggleEdit('${esc(u.id)}')">${_editing === u.id ? 'CLOSE' : 'EDIT'}</button>
+            <button class="btn-del" ${!canDel ? `disabled title="${esc(reason)}"` : `onclick="deleteUser('${esc(u.id)}','${esc(u.username)}')"`}>DELETE</button>
+          </td>
+        </tr>`;
+        if (_editing !== u.id) return row;
+        const pwField = u.auth_provider === 'oidc'
+          ? '<span style="color:var(--muted);font-size:.68rem">password managed by the identity provider</span>'
+          : `<input type="password" id="ed-password" placeholder="new password (blank = keep)" autocomplete="new-password" minlength="8" maxlength="128"/>`;
+        const adminField = u.env_admin
+          ? '<span style="color:var(--muted);font-size:.68rem">admin via environment</span>'
+          : `<label style="font-size:.7rem;color:var(--dim);display:flex;align-items:center;gap:.3rem"><input type="checkbox" id="ed-admin" ${u.is_admin ? 'checked' : ''} ${isSelf ? 'disabled title="you cannot remove your own admin role"' : ''}/> admin</label>`;
+        return row + `<tr class="edit-row"><td colspan="5">
+          <form class="pw-form" style="margin:.2rem 0 .5rem" onsubmit="saveUser(event,'${esc(u.id)}')">
+            <strong>EDIT ${esc(u.username)}</strong>
+            <input type="text" id="ed-username" value="${esc(u.username)}" minlength="3" maxlength="32" pattern="[a-zA-Z0-9_-]+" ${u.env_admin ? 'disabled title="defined by the environment"' : ''}/>
+            ${pwField}
+            ${adminField}
+            <button type="submit">SAVE</button>
+            <button type="button" class="btn-del" onclick="revokeKeys('${esc(u.id)}','${esc(u.username)}')" title="Revoke every API key of this account">REVOKE API KEYS</button>
+            <span id="ed-status"></span>
+          </form>
+        </td></tr>`;
+      }).join('');
+    }
+
+    function toggleEdit(id) { _editing = _editing === id ? null : id; renderUsers(); }
+
+    async function createUser(ev) {
+      ev.preventDefault();
+      const st = document.getElementById('nu-status');
+      st.textContent = 'creating';
+      const body = { username: document.getElementById('nu-username').value.trim(),
+                     password: document.getElementById('nu-password').value,
+                     is_admin: document.getElementById('nu-admin').checked };
+      const r = await fetch('/admin/api/users', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body) }).catch(() => null);
+      const d = await r?.json().catch(() => ({}));
+      if (r?.ok) {
+        st.textContent = 'account created';
+        ['nu-username', 'nu-password'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('nu-admin').checked = false;
+        await fetchUsers();
+      } else {
+        st.textContent = 'failed: ' + apiError(d);
+      }
+    }
+
+    async function saveUser(ev, id) {
+      ev.preventDefault();
+      const st = document.getElementById('ed-status');
+      const body = {};
+      const nameEl = document.getElementById('ed-username');
+      const pwEl = document.getElementById('ed-password');
+      const adminEl = document.getElementById('ed-admin');
+      const u = _users.find(x => x.id === id) || {};
+      if (nameEl && !nameEl.disabled && nameEl.value.trim() !== u.username) body.username = nameEl.value.trim();
+      if (pwEl && pwEl.value) body.password = pwEl.value;
+      if (adminEl && !adminEl.disabled && adminEl.checked !== !!u.is_admin) body.is_admin = adminEl.checked;
+      if (!Object.keys(body).length) { st.textContent = 'nothing changed'; return; }
+      st.textContent = 'saving';
+      const r = await fetch('/admin/api/users/' + encodeURIComponent(id), { method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(() => null);
+      const d = await r?.json().catch(() => ({}));
+      if (r?.ok) { _editing = null; await fetchUsers(); }
+      else { st.textContent = 'failed: ' + apiError(d); }
+    }
+
+    async function revokeKeys(id, username) {
+      if (!confirm('Revoke all API keys of "' + username + '"?')) return;
+      const r = await fetch('/admin/api/users/' + encodeURIComponent(id) + '/api-keys', { method: 'DELETE' }).catch(() => null);
+      const d = await r?.json().catch(() => ({}));
+      document.getElementById('ed-status').textContent = r?.ok ? (d.revoked + ' key(s) revoked') : 'failed: ' + apiError(d);
+    }
+
+    function apiError(d) {
+      const det = d?.detail;
+      if (!det) return 'unknown error';
+      if (typeof det === 'string') return det;
+      if (Array.isArray(det)) return det.map(e => e.msg || JSON.stringify(e)).join('; ');
+      return JSON.stringify(det);
+    }
+
+    /* ── Export logs ── */
+    function exportLogs() {
+      const rows  = applyFilters(_logs);
+      const lines = rows.map(e =>
+        `${e.ts.replace('T',' ').slice(0,19)} [${e.level}] [${logSrc(e).toUpperCase()}] ${e.logger}: ${e.msg}`
+      ).join('\n');
+      const blob = new Blob([lines], { type: 'text/plain' });
+      const ts   = new Date().toISOString().replace(/[:.]/g,'-').slice(0,19);
+      const a    = document.createElement('a');
+      a.href     = URL.createObjectURL(blob);
+      a.download = `hbg-logs-${ts}.txt`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    /* ── Export / import users ── */
+    function exportUsers() { window.location.href = '/admin/api/users/export' }
+
+    async function importUsers(input) {
+      const file = input.files[0];
+      if (!file) return;
+      const statusEl = document.getElementById('import-status');
+      statusEl.style.display = 'block';
+      statusEl.style.background = 'rgba(91,95,240,.1)';
+      statusEl.style.borderColor = 'rgba(91,95,240,.3)';
+      statusEl.style.color = 'var(--dim)';
+      statusEl.textContent = 'IMPORTING…';
+      const fd = new FormData();
+      fd.append('file', file);
+      const r = await fetch('/admin/api/users/import', { method: 'POST', body: fd }).catch(() => null);
+      input.value = '';
+      if (r?.ok) {
+        const d = await r.json();
+        statusEl.style.background = 'rgba(24,232,120,.08)';
+        statusEl.style.borderColor = 'rgba(24,232,120,.3)';
+        statusEl.style.color = 'var(--green)';
+        statusEl.textContent = `OK - ${d.imported} account${d.imported !== 1 ? 's' : ''} imported`;
+        await fetchUsers();
+      } else {
+        const d = await r?.json().catch(() => ({}));
+        statusEl.style.background = 'rgba(240,64,96,.08)';
+        statusEl.style.borderColor = 'rgba(240,64,96,.3)';
+        statusEl.style.color = 'var(--red)';
+        statusEl.textContent = 'FAILED - ' + (d?.detail || 'unknown error');
+      }
+    }
+
+    /* ── Change password ── */
+    async function changePassword(ev) {
+      ev.preventDefault();
+      const st = document.getElementById('pw-status');
+      const cur = document.getElementById('pw-current').value;
+      const nw  = document.getElementById('pw-new').value;
+      if (nw !== document.getElementById('pw-new2').value) { st.textContent = 'passwords do not match'; return; }
+      st.textContent = 'updating';
+      const r = await fetch('/auth/password', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_password: cur, new_password: nw }) }).catch(() => null);
+      const d = await r?.json().catch(() => ({}));
+      if (r?.ok) {
+        st.textContent = 'password updated';
+        ['pw-current', 'pw-new', 'pw-new2'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('status-warning').style.display = 'none';
+        fetchInfo();
+      } else {
+        st.textContent = 'failed: ' + (typeof d?.detail === 'string' ? d.detail : 'invalid input');
+      }
+    }
+
+    /* ── Delete user ── */
+    async function deleteUser(id, username) {
+      if (!confirm('Delete account "' + username + '"?\nAll stored results will be erased. This cannot be undone.')) return;
+      const r = await fetch('/admin/api/users/' + id, { method: 'DELETE' }).catch(() => null);
+      if (r?.ok) {
+        await fetchUsers();
+      } else {
+        const d = await r?.json().catch(() => ({}));
+        alert('FAILED: ' + (d?.detail || 'unknown error'));
+      }
+    }
+
+    /* ── Version, changelog, system info ── */
+    async function fetchInfo() {
+      const r = await fetch('/admin/api/info').catch(() => null);
+      if (!r?.ok) return;
+      const info = await r.json();
+      document.getElementById('nav-version').textContent = 'v' + info.version;
+      const warn = document.getElementById('status-warning');
+      if (info.initial_password_pending) {
+        warn.textContent = 'INITIAL ADMIN PASSWORD STILL IN USE: change it in Accounts';
+        warn.style.display = '';
+      } else if (info.weak_admin_password) {
+        warn.textContent = 'WEAK ADMIN PASSWORD: change it in Accounts';
+        warn.style.display = '';
+      }
+      const rows = Object.entries(info).map(([k, v]) =>
+        `<tr><td class="ts">${esc(k)}</td><td>${esc(String(v))}</td></tr>`);
+      document.getElementById('system-tbody').innerHTML = rows.join('');
+    }
+
+    async function fetchChangelog() {
+      const r = await fetch('/admin/api/changelog').catch(() => null);
+      if (!r?.ok) return;
+      const d = await r.json();
+      document.getElementById('changelog-version').textContent = 'CURRENT VERSION v' + d.version;
+      // Server-side rendered and sanitised (same renderer as the public blog).
+      document.getElementById('changelog-body').innerHTML = d.html;
+    }
+
+    /* ── Tab switcher ── */
+    const TABS = ['logs', 'users', 'changelog', 'system'];
+    function showTab(name) {
+      for (const t of TABS) {
+        document.getElementById('panel-' + t).hidden = name !== t;
+        document.getElementById('tab-btn-' + t).classList.toggle('active', name === t);
+      }
+    }
+
+    /* ── Escape ── */
+    function esc(s) {
+      return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{{APP_NAME}} - Sign in</title>
+  <meta name="robots" content="noindex"/>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+  <style>
+    :root{--bg:#03050a;--surf:#080c18;--surf2:#0d1224;--border:#18243a;--border2:#1e2f4a;--text:#e4ecf8;--muted:#5a6b82;--dim:#8497b0;--accent:#7c3aed;--accent2:#6d28d9;--accent-rgb:124,58,237;--red:#ef4444;--green:#22c55e;--font:system-ui,-apple-system,sans-serif}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{font-size:14px}
+    body{font-family:var(--font);background:var(--bg);background-image:radial-gradient(ellipse 80% 40% at 50% -5%,rgba(var(--accent-rgb),.12) 0%,transparent 60%);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem}
+    .card{background:var(--surf);border:1px solid var(--border2);border-radius:14px;padding:2.2rem 2rem;width:100%;max-width:380px;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+    .logo{text-align:center;margin-bottom:1.8rem}
+    .logo-text{font-size:1.1rem;font-weight:800;color:var(--text);letter-spacing:.03em}
+    .logo-text span{color:var(--accent)}
+    .logo-sub{font-size:.72rem;color:var(--muted);margin-top:.3rem}
+    h2{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:1.4rem;text-align:center}
+    .field{margin-bottom:1rem}
+    label{display:block;font-size:.72rem;font-weight:600;color:var(--dim);margin-bottom:.35rem}
+    input{width:100%;background:var(--surf2);border:1px solid var(--border);border-radius:7px;color:var(--text);font-family:var(--font);font-size:.82rem;padding:.55rem .8rem;outline:none;transition:border-color .15s}
+    input:focus{border-color:var(--accent)}
+    input::placeholder{color:var(--border2)}
+    .btn{width:100%;padding:.6rem;border-radius:7px;border:none;cursor:pointer;font-size:.85rem;font-weight:700;background:var(--accent);color:#fff;margin-top:.4rem;transition:background .15s;display:block;text-align:center;text-decoration:none}
+    .btn:hover:not(:disabled){background:var(--accent2)}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn-sso{background:var(--surf2);border:1px solid var(--border2);color:var(--text);margin-bottom:.4rem}
+    .btn-sso:hover{background:var(--surf2);border-color:var(--accent)}
+    .divider{display:flex;align-items:center;gap:.6rem;color:var(--muted);font-size:.68rem;margin:1rem 0;text-transform:uppercase;letter-spacing:.08em}
+    .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border)}
+    .error{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:7px;padding:.55rem .8rem;font-size:.75rem;color:#f87171;margin-top:.8rem;display:none}
+    .footer-links{margin-top:1.5rem;text-align:center;font-size:.72rem;color:var(--muted)}
+    .footer-links a{color:var(--accent)}
+    .footer-links a:hover{text-decoration:underline}
+    .spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;display:inline-block;animation:spin .6s linear infinite;vertical-align:middle;margin-right:.4rem}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    footer{margin-top:2rem;font-size:.62rem;font-weight:600;color:var(--muted);text-align:center}
+    .hidden{display:none}
+    [data-theme=light] .logo-text,[data-theme=light] h2{color:var(--text)}
+  </style>
+</head>
+<body>
+  <button type="button" class="btn btn-sso mode-btn" onclick="hbgToggleMode()" title="Light / dark mode" style="position:absolute;top:1rem;right:1rem;width:auto;padding:.35rem .6rem;margin:0"><span class="mode-icon">&#9728;</span></button>
+
+  <div class="card">
+    <div class="logo">
+      <div class="logo-text">{{BRAND_A}}<span>{{BRAND_B}}</span></div>
+      <div class="logo-sub">Threat Infrastructure Hunting Platform</div>
+    </div>
+
+    <h2>Sign in to your account</h2>
+
+    <div id="sso-block" class="hidden">
+      <a class="btn btn-sso" id="btn-sso" href="/auth/sso/login">Sign in with SSO</a>
+      <div class="divider" id="sso-divider">or</div>
+    </div>
+
+    <div id="password-block">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" placeholder="analyst" autocomplete="username" autofocus/>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="password" autocomplete="current-password"/>
+      </div>
+      <button class="btn" id="btn-login" onclick="doLogin()">Sign in</button>
+    </div>
+    <div class="error" id="err"></div>
+
+    <div class="footer-links">
+      <a href="/features">What can this tool do?</a>
+      <span id="register-link" class="hidden">&nbsp;&middot;&nbsp;<a href="/app">Create an account</a></span>
+    </div>
+  </div>
+
+  <footer>&copy; {{YEAR}} {{APP_NAME}}</footer>
+
+<script>
+  const params = new URLSearchParams(location.search);
+  const rawNext = params.get('next') || '/app';
+  // Only same-site relative paths are accepted as a destination.
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/app';
+
+  async function loadConfig() {
+    try {
+      const r = await fetch('/auth/config');
+      if (!r.ok) return;
+      const c = await r.json();
+      if (c.sso_enabled) {
+        document.getElementById('sso-block').classList.remove('hidden');
+        const btn = document.getElementById('btn-sso');
+        btn.textContent = c.sso_label || 'Sign in with SSO';
+        btn.href = '/auth/sso/login?next=' + encodeURIComponent(next);
+      }
+      if (!c.password_login_enabled) {
+        document.getElementById('password-block').classList.add('hidden');
+        document.getElementById('sso-divider').classList.add('hidden');
+      }
+      if (c.registration_enabled) document.getElementById('register-link').classList.remove('hidden');
+    } catch {}
+  }
+
+  async function doLogin() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('btn-login');
+    const err = document.getElementById('err');
+    err.style.display = 'none';
+    if (!username || !password) {
+      err.textContent = 'Please enter your username and password.';
+      err.style.display = 'block';
+      return;
+    }
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Signing in';
+    try {
+      const resp = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      });
+      if (resp.ok) {
+        window.location.href = next;
+      } else {
+        const data = await resp.json().catch(() => ({}));
+        err.textContent = data.detail || 'Invalid username or password.';
+        err.style.display = 'block';
+      }
+    } catch {
+      err.textContent = 'Network error, please try again.';
+      err.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Sign in';
+    }
+  }
+
+  ['username', 'password'].forEach(id =>
+    document.getElementById(id).addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); })
+  );
+  loadConfig();
+</script>
+</body>
+</html>
