@@ -95,6 +95,13 @@ in `.env`: `HTTP_PORT=8457`, `HTTPS_PORT=8458`, keep
 `SITE_ADDRESS=http://localhost` and set `HUNTER_PUBLIC_URL=http://localhost:8457`;
 the site is then served on `http://localhost:8457`. Any free port works.
 
+Behind a corporate proxy, set `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` in
+`.env` before building. The same values are used for the image build (apt,
+curl, uv) and by the running containers (scans, GeoIP download, SSO discovery,
+Let's Encrypt). Keep `localhost,127.0.0.1,app,db` in `NO_PROXY`. Tor and the
+nmap host probes cannot use an HTTP proxy, so set `HUNTER_TOR_ENABLED=false`
+and `HUNTER_HIG_ENABLED=false` if the proxy is the only route out.
+
 Windows (PowerShell) and macOS use the same commands; `cp` is `Copy-Item` on
 PowerShell:
 
@@ -123,6 +130,7 @@ Everything is configured through `.env`. The complete, commented list lives in
 | `HUNTER_HIG_ENABLED`, `HUNTER_TOR_ENABLED` | Host probes and Tor inside the container |
 | `HUNTER_FEED_INGEST` | Nightly import of public threat feeds |
 | `APP_CPUS`, `APP_MEMORY` | Container resource limits |
+| `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` | Outbound proxy for the build and the containers (optional) |
 
 Generate secrets with:
 
@@ -312,8 +320,11 @@ Python:
 ```python
 import httpx
 
-api = httpx.Client(base_url="https://hunt.example.com/api/v1",
-                   headers={"Authorization": "Bearer hbg_..."}, timeout=300)
+api = httpx.Client(
+    base_url="https://hunt.example.com/api/v1",
+    headers={"Authorization": "Bearer hbg_..."},
+    timeout=300,
+)
 results = api.post("/analyse/domain", json={"targets": ["example.com"]}).json()
 print(results[0]["final_status"], results[0]["dns"]["A"])
 ```
@@ -392,8 +403,9 @@ OpenCTI (STIX 2.1 bundle through pycti):
 import httpx
 from pycti import OpenCTIApiClient
 
-hbg = httpx.Client(base_url="https://hunt.example.com/api/v1",
-                   headers={"Authorization": "Bearer hbg_..."})
+hbg = httpx.Client(
+    base_url="https://hunt.example.com/api/v1", headers={"Authorization": "Bearer hbg_..."}
+)
 bundle = hbg.get(f"/cases/{case_id}/export", params={"format": "stix"}).text
 
 octi = OpenCTIApiClient("https://opencti.example.com", "OPENCTI_TOKEN")

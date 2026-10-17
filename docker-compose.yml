@@ -10,6 +10,11 @@
 #
 # Only Caddy publishes ports. Everything the app needs is a HUNTER_* variable
 # in .env; see .env.example for the documented list.
+#
+# Outbound proxy: hosts that reach the internet through an HTTP(S) proxy set
+# HTTP_PROXY / HTTPS_PROXY / NO_PROXY in .env. They are passed to the image
+# build (apt, curl, uv) and to the running containers (scans, GeoIP download,
+# Let's Encrypt). Leave them empty on a host with direct internet access.
 
 name: huntingbadguys
 
@@ -25,6 +30,10 @@ services:
       SITE_ADDRESS: ${SITE_ADDRESS:-http://localhost}
       # Caddy's global `email` directive needs a value even for plain-HTTP sites.
       ACME_EMAIL: ${ACME_EMAIL:-admin@localhost}
+      # Outbound proxy for ACME (Let's Encrypt); `app` must stay in NO_PROXY.
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,app,db}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -45,6 +54,15 @@ services:
       context: .
       args:
         PLAYWRIGHT_VERSION: ${PLAYWRIGHT_VERSION:-1.62.0}
+        # Build-time proxy (apt, curl, uv). Docker treats these as predefined
+        # build arguments: they reach every RUN step but are not baked into
+        # the image. Both spellings are set because apt reads the lower case.
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,app,db}
+        http_proxy: ${HTTP_PROXY:-}
+        https_proxy: ${HTTPS_PROXY:-}
+        no_proxy: ${NO_PROXY:-localhost,127.0.0.1,app,db}
     image: huntingbadguys/app:${APP_VERSION:-1.0.0}
     restart: unless-stopped
     env_file: ${ENV_FILE:-.env}
@@ -54,6 +72,16 @@ services:
       HUNTER_GEOIP_DB: /data/GeoLite2-City.mmdb
       HUNTER_PRODUCTION: ${HUNTER_PRODUCTION:-true}
       HUNTER_PUBLIC_URL: ${HUNTER_PUBLIC_URL:-${SITE_ADDRESS:-http://localhost}}
+      # Runtime proxy for outbound HTTP(S): scans, GeoIP download, SSO
+      # discovery, feed ingestion, Chromium. Honoured by httpx, urllib, curl and
+      # Chromium. NO_PROXY must keep localhost (health check, ingest loop) and
+      # db. Tor and nmap do not use an HTTP proxy.
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,app,db}
+      http_proxy: ${HTTP_PROXY:-}
+      https_proxy: ${HTTPS_PROXY:-}
+      no_proxy: ${NO_PROXY:-localhost,127.0.0.1,app,db}
     volumes:
       - app_data:/data
     depends_on:

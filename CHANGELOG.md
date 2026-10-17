@@ -7,6 +7,17 @@ admin console under the Changelog tab.
 
 ## [Unreleased]
 
+### Added
+
+- Outbound proxy support: `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` in `.env`
+  are passed to the image build and to the `app` and `caddy` containers for
+  hosts that reach the internet through a corporate proxy.
+
+### Fixed
+
+- CI format check: ruff 0.17 formats Python code blocks in Markdown, so the two
+  `httpx.Client` examples in the README are now written the way it expects.
+
 ## [1.0.0] - 2026-10-17
 
 First public release.
