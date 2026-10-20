@@ -6486,6 +6486,16 @@
     // REPORT - HTML investigation report generator
     // ══════════════════════════════════════════════════════════════════════════
 
+    // Hex views in the exported report: per-byte spans (selection mirroring) cost
+    // about 110 characters of HTML per byte, so they are only used for dumps up to
+    // _RPT_HEX_SPAN_ROWS rows (32 bytes each); larger dumps are plain text capped at
+    // _RPT_HEX_MAX_ROWS rows. Without the cap a case with a few MB of analysed files
+    // produced a report of several hundred MB that could not be published.
+    const _RPT_HEX_SPAN_ROWS = 32;   // 1 KB
+    const _RPT_HEX_MAX_ROWS = 256;   // 8 KB
+    // Caddy rejects request bodies above 16 MB (Caddyfile request_body max_size).
+    const _PUBLISH_MAX_BYTES = 15 * 1024 * 1024;
+
     // Build the rich self-contained HTML investigation report (RPT style).
     // Returns { html, graphSVG }. Reused by the RPT button and blog publishing.
     async function _buildCaseReportHtml(caseId, c, onStep) {
@@ -7391,6 +7401,70 @@
         }).join('\n');
       };
 
+      // NT - Network Traffic: live capture (r.nt) + static per-file extraction (r.efa[].nt).
+      const rNT = r => {
+        const mb = m => `<span class="ntm">${E((m || 'GET').toUpperCase())}</span>`;
+        const urlTd = u => `<td class="mono small" style="word-break:break-all">${E(u || '')}</td>`;
+        const callRows = calls => calls.map(c => `<tr><td>${mb(c.method)}</td><td class="small">${E(c.src)}</td>${urlTd(c.url)}<td class="mono small" style="word-break:break-all">${E(String(c.post_data || '').slice(0, 200))}</td></tr>`).join('');
+        const wsRows = ws => ws.map(u => `<tr><td>${mb('WS')}</td><td class="small">ws</td>${urlTd(u)}<td></td></tr>`).join('');
+        const head = ['Method', 'Source', 'URL', 'Body'];
+        let out = '';
+        const dyn = r.nt || {};
+        const dynCalls = [
+          ...(dyn.fetch_calls || []).map(c => ({ url: c.url, method: c.method, src: 'fetch', post_data: c.post_data })),
+          ...(dyn.xhr_calls || []).map(c => ({ url: c.url, method: c.method, src: 'xhr', post_data: c.post_data })),
+          ...(dyn.other_calls || []).map(c => ({ url: c.url, method: c.method, src: c.resource_type || 'other', post_data: c.post_data })),
+        ];
+        const dynWs = dyn.websockets || [];
+        if (dynCalls.length || dynWs.length) {
+          const n = dynCalls.length + dynWs.length;
+          out += `<div class="nt-sub">Live capture - ${n} request${n !== 1 ? 's' : ''}</div>` + tbl(head, callRows(dynCalls) + wsRows(dynWs));
+        }
+        let staticHdr = false;
+        for (const e of (r.efa || [])) {
+          const nt = e.nt;
+          if (!nt) continue;
+          const calls = [
+            ...(nt.fetch_calls || []).map(c => ({ url: c.url, method: c.method, src: 'fetch' })),
+            ...(nt.xhr_calls || []).map(c => ({ url: c.url, method: c.method, src: 'xhr' })),
+            ...(nt.axios_calls || []).map(c => ({ url: c.url, method: c.method, src: 'axios' })),
+            ...(nt.jquery_calls || []).map(c => ({ url: c.url, method: c.method, src: 'jquery' })),
+            ...(nt.php_http || []).map(c => ({ url: c.url, method: c.fn || 'php', src: 'php' })),
+          ];
+          const ws = nt.websockets || [], forms = nt.form_actions || [], bases = nt.api_bases || [];
+          const gql = nt.graphql || [], beacons = nt.beacons || [];
+          if (!calls.length && !ws.length && !forms.length && !bases.length && !gql.length && !beacons.length) continue;
+          if (!staticHdr) { out += '<div class="nt-sub">Static extraction</div>'; staticHdr = true; }
+          out += `<div class="nt-file">${E(e.path || e.url || '?')}</div>`;
+          const rows = callRows(calls) + wsRows(ws)
+            + forms.map(f => `<tr><td>${mb(f.method || 'POST')}</td><td class="small">form</td>${urlTd(f.action)}<td></td></tr>`).join('');
+          if (rows) out += tbl(head, rows);
+          if (bases.length) out += `<div class="nt-meta">API base: ${bases.map(u => `<span class="chip">${E(u)}</span>`).join(' ')}</div>`;
+          if (gql.length) out += `<div class="nt-meta">GraphQL: ${gql.map(u => `<span class="chip">${E(u)}</span>`).join(' ')}</div>`;
+          for (const b of beacons) {
+            const snip = typeof b === 'string' ? b : (b.snippet || '');
+            const ms = typeof b === 'object' && b && b.delay_ms != null ? ` ${b.delay_ms} ms` : '';
+            out += `<div class="nt-beacon"><strong>BEACON${E(ms)}</strong> <span class="mono">${E(snip.slice(0, 160))}${snip.length > 160 ? '...' : ''}</span></div>`;
+          }
+        }
+        return out || '<em>No network traffic captured</em>';
+      };
+
+      // Raw bytes of an EFA hex dump as base64 (1.3 chars per byte) so the report
+      // can offer the full dump and the raw file for download without embedding
+      // the 110-chars-per-byte interactive view.
+      const _hexDumpToB64 = dump => {
+        const bytes = [];
+        for (const l of dump.split('\n')) {
+          const pi = l.indexOf('|');
+          const m = l.slice(10, pi < 0 ? l.length : pi).match(/\b[0-9A-Fa-f]{2}\b/g);
+          if (m) for (const h of m) bytes.push(parseInt(h, 16));
+        }
+        let bin = '';
+        for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.slice(i, i + 8192));
+        return btoa(bin);
+      };
+      let _hxSeq = 0;
       const rEFA = efa => {
         if (!efa?.length) return '<em>No file analysis</em>';
         return efa.map(e=>{
@@ -7401,10 +7475,17 @@
             e.strings?.length?`<tr><td class="rt">Strings</td><td class="mono small">${e.strings.slice(0,12).map(s=>E(s)).join('<br>')}</td></tr>`:'',
           ].join('');
           const hexBlock = e.hex_dump ? (()=>{
-            const lines = e.hex_dump.split('\n');
-            const label = ` - ${lines.length} rows`;
-            const hexHtml = _rHxRenderLines(lines);
-            return `<details style="margin-top:.35rem"><summary style="font-size:.63rem;color:#64748b;cursor:pointer;padding:.2rem .4rem;background:#f1f5f9;border-radius:3px;display:flex;align-items:center;gap:.3rem"><span style="font-size:.6rem;font-weight:700;color:#3b82f6;border:1px solid #3b82f633;padding:.03rem .25rem;border-radius:3px;flex-shrink:0">HVI</span>Hex View${label}</summary><pre oncopy="_rHxCopy(event)" style="font-size:.53rem;font-family:'Courier New',monospace;white-space:pre;overflow:auto;max-height:280px;background:#f8fafc;padding:.4rem;border-radius:4px;border:1px solid #e2e8f0;line-height:1.35;color:#334155;margin:.3rem 0 0">${hexHtml}</pre></details>`;
+            const all = e.hex_dump.split('\n');
+            const lines = all.slice(0, _RPT_HEX_MAX_ROWS);
+            const truncated = all.length > lines.length;
+            const id = 'hxd' + (_hxSeq++);
+            const fname = ((e.path || e.url || 'file').split('/').filter(Boolean).pop() || 'file').replace(/[^\w.-]+/g, '_').slice(0, 80);
+            const label = ` - ${all.length} rows` + (truncated ? ` (first ${lines.length} shown)` : '');
+            const hexHtml = all.length <= _RPT_HEX_SPAN_ROWS ? _rHxRenderLines(lines) : lines.map(l => E(l)).join('\n');
+            const tools = `<div class="hx-tools" id="${id}-tools">`
+              + (truncated ? `<span>Preview of the first ${_RPT_HEX_MAX_ROWS * 32 / 1024} KB of ${Math.round((e.hex_size || 0) / 1024)} KB.</span><button class="copy-btn hx-showall" onclick="_rHxShowAll('${id}')">Show all rows</button>` : '<span></span>')
+              + `<button class="copy-btn" onclick="_rHxDownload('${id}','txt')">Download hex dump</button><button class="copy-btn" onclick="_rHxDownload('${id}','bin')">Download raw bytes</button></div>`;
+            return `<details style="margin-top:.35rem"><summary style="font-size:.63rem;color:#64748b;cursor:pointer;padding:.2rem .4rem;background:#f1f5f9;border-radius:3px;display:flex;align-items:center;gap:.3rem"><span style="font-size:.6rem;font-weight:700;color:#3b82f6;border:1px solid #3b82f633;padding:.03rem .25rem;border-radius:3px;flex-shrink:0">HVI</span>Hex View${label}</summary><pre id="${id}-pre" oncopy="_rHxCopy(event)" style="font-size:.53rem;font-family:'Courier New',monospace;white-space:pre;overflow:auto;max-height:280px;background:#f8fafc;padding:.4rem;border-radius:4px;border:1px solid #e2e8f0;line-height:1.35;color:#334155;margin:.3rem 0 0">${hexHtml}</pre>${tools}<script type="text/plain" id="${id}" data-name="${E(fname)}">${_hexDumpToB64(e.hex_dump)}<\/script></details>`;
           })() : '';
           const dieBlock = (() => {
             const detects = (e.die || []).flatMap(d => d.values || []).filter(v => v.name);
@@ -7502,6 +7583,7 @@
         }
         if (r.efi&&Object.keys(r.efi).length) secs+=`<div class="rsec full"><div class="rsec-t">Extracted IOCs (EFI)</div>${rEFI(r.efi)}</div>`;
         if (r.efa?.length) secs+=`<div class="rsec full"><div class="rsec-t">File Analysis (EFA)</div>${rEFA(r.efa)}</div>`;
+        if (_ntHasData(r)) secs+=`<div class="rsec full"><div class="rsec-t">Network Traffic (NT)</div>${rNT(r)}</div>`;
         return `<div class="tcard">
           <div class="t-hdr">
             <span class="t-num">${idx+1}</span>
@@ -7650,6 +7732,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;fo
 .ioc-g{margin-bottom:.5rem}
 .ioc-lbl{font-size:.57rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.2rem}
 .ioc-chips{display:flex;flex-wrap:wrap;gap:.2rem}
+.nt-sub{font-size:.58rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#38bdf8;margin:.4rem 0 .2rem}
+.nt-file{font-family:'Courier New',monospace;font-size:.66rem;font-weight:700;color:var(--fg);margin:.4rem 0 .15rem;word-break:break-all}
+.ntm{display:inline-block;font-size:.56rem;font-weight:700;color:#38bdf8;border:1px solid rgba(56,189,248,.4);border-radius:2px;padding:.02rem .25rem;min-width:36px;text-align:center}
+.nt-meta{font-size:.62rem;color:var(--muted);margin:.2rem 0}
+.hx-tools{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;font-size:.58rem;color:#64748b;padding:.25rem .1rem}
+.hx-tools span{flex:1}
+.hx-tools .copy-btn{margin-left:0}
+.nt-beacon{font-size:.62rem;color:#ef4444;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.25);border-radius:3px;padding:.2rem .4rem;margin:.2rem 0;word-break:break-all}
 .chip{display:inline-block;padding:.07rem .4rem;background:var(--chip-bg);border:1px solid var(--chip-b);border-radius:4px;font-family:'Courier New',monospace;font-size:.62rem;color:var(--chip-c);word-break:break-all}
 /* ── EFA ─────────────────────────────────────────────────────────────── */
 .efa-blk{margin-bottom:.65rem;border-radius:6px;border:1px solid var(--border);overflow:hidden}
@@ -7845,6 +7935,10 @@ function _rHxCopy(e){
   var result=lastCol==='asc'?parts.join(''):parts.join(' ');
   if(result){e.clipboardData.setData('text/plain',result);e.preventDefault();}
 }
+function _rHxBytes(id){var bin=atob(document.getElementById(id).textContent.trim()),u=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u;}
+function _rHxDumpText(u){var out=[];for(var i=0;i<u.length;i+=32){var row=u.subarray(i,i+32),groups=[];for(var g=0;g<row.length;g+=8){var parts=[];for(var k=g;k<Math.min(g+8,row.length);k++)parts.push(('0'+row[k].toString(16).toUpperCase()).slice(-2));var gs=parts.join(' ');while(gs.length<23)gs+=' ';groups.push(gs);}var asc='';for(var j=0;j<row.length;j++){var b=row[j];asc+=(b>=32&&b<127)?String.fromCharCode(b):'.';}out.push(('00000000'+i.toString(16).toUpperCase()).slice(-8)+'  '+groups.join('  ')+'  |'+asc+'|');}return out.join('\\n');}
+function _rHxShowAll(id){var pre=document.getElementById(id+'-pre');pre.textContent=_rHxDumpText(_rHxBytes(id));var t=document.getElementById(id+'-tools');if(t){var b=t.querySelector('.hx-showall');if(b)b.remove();var sp=t.querySelector('span');if(sp)sp.textContent='';}}
+function _rHxDownload(id,kind){var el=document.getElementById(id),u=_rHxBytes(id),name=el.getAttribute('data-name')||'file';var blob=kind==='bin'?new Blob([u],{type:'application/octet-stream'}):new Blob([_rHxDumpText(u)],{type:'text/plain'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+(kind==='bin'?'.bin':'.hex.txt');document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1000);}
 <\/script>
 </body>
 </html>`;
@@ -8362,7 +8456,12 @@ function _rHxCopy(e){
           payload.graph_svg = built.graphSVG || '';
         } catch {}
         btn.textContent = 'Publishing…';
-        const r = await fetch('/api/blog/posts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        let body;
+        try { body = JSON.stringify(payload); }
+        catch { throw new Error('Report too large to publish: the browser cannot serialise it. Remove large analysed files from the case and retry.'); }
+        const bytes = new Blob([body]).size;
+        if (bytes > _PUBLISH_MAX_BYTES) throw new Error(`Report too large to publish (${(bytes / 1048576).toFixed(1)} MB, limit ${Math.round(_PUBLISH_MAX_BYTES / 1048576)} MB). Remove large analysed files from the case and retry.`);
+        const r = await fetch('/api/blog/posts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
         if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.detail || ('HTTP ' + r.status)); }
         const post = await r.json();
         _rptCasePost = { slug: post.slug, is_published: true }; _rptUpdatePubButtons();

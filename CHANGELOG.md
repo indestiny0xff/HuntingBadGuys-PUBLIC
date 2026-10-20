@@ -12,9 +12,19 @@ admin console under the Changelog tab.
 - Outbound proxy support: `HTTP_PROXY`, `HTTPS_PROXY` and `NO_PROXY` in `.env`
   are passed to the image build and to the `app` and `caddy` containers for
   hosts that reach the internet through a corporate proxy.
+- Case report (RPT and blog): a "Network Traffic (NT)" section per target with
+  the live capture (fetch, XHR, other requests, WebSockets) and the static
+  per-file extraction (calls, forms, API bases, GraphQL endpoints, beacons).
 
 ### Fixed
 
+- Blog publishing failed with "Invalid string length" on cases with analysed
+  files: the report embedded every byte of every hex dump as HTML spans, which
+  produced reports of several hundred MB. The hex view now previews the first
+  8 KB per file (interactive spans only for dumps up to 1 KB); the full bytes
+  are embedded compactly with "Show all rows", "Download hex dump" and
+  "Download raw bytes" buttons. The publish dialog reports a clear error when
+  the payload exceeds the 16 MB proxy limit.
 - CI format check: ruff 0.17 formats Python code blocks in Markdown, so the two
   `httpx.Client` examples in the README are now written the way it expects.
 
